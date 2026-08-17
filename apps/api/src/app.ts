@@ -225,6 +225,10 @@ const toAssessments = (
     expectednessRationale: r.expectedness_rationale,
     rsiVersionId: r.rsi_version_id,
   }));
+// Sponsor causality and expectedness overrides are the medical reviewer's
+// (authz.ts); the reporter's own assessment travels with data entry.
+const needsAssess = (a: z.infer<typeof AssessmentBody>[] | undefined): boolean =>
+  a?.some((r) => r.assessor === "sponsor" || r.expectedness_override != null) ?? false;
 const toTests = (t: z.infer<typeof SectionsBody>["tests"]): TestInput[] | undefined =>
   t?.map((r) => ({
     seq: r.seq,
@@ -697,7 +701,7 @@ export function buildApp(db: Db, sql: Sql) {
       security,
       summary: "Create a case with its initial version and any sections that arrived",
       description:
-        "An intake item is an ordinary case whose first version does not yet meet the ICH E2B(R3) §3.3.1 minimum criteria; it shows as 'intake' in the queue until it does. The clock materializes at once (ADR-0007).",
+        "An intake item is an ordinary case whose first version does not yet meet the ICH E2B(R3) §3.3.1 minimum criteria; it shows as 'intake' in the queue until it does. The clock materializes at once (ADR-0007). Assessment rows with assessor 'sponsor', or any expectedness override, also require 'assess' for the study, the same gate as PUT /case-versions/{id}/assessments; the reporter's own assessment needs only 'enter'.",
       request: { body: body(CreateCaseBody) },
       responses: {
         201: json(
@@ -710,7 +714,10 @@ export function buildApp(db: Db, sql: Sql) {
           "Created",
         ),
         400: json(ErrorSchema, "Invalid"),
-        403: json(ErrorSchema, "Out of scope"),
+        403: json(
+          ErrorSchema,
+          "Out of scope, or sponsor assessments / expectedness overrides without 'assess'",
+        ),
       },
     }),
     async (c) => {
@@ -722,6 +729,17 @@ export function buildApp(db: Db, sql: Sql) {
       if (!scope) return c.json({ error: "study or product not found" }, 400);
       if (!permits(c.get("grants"), "enter", scope))
         return c.json({ error: "requires 'enter' permission for this study" }, 403);
+      // The scope lives in the body, so the assess gate that
+      // PUT /case-versions/{id}/assessments applies at the route is completed
+      // here; sponsor rows are refused, never silently dropped.
+      if (needsAssess(b.assessments) && !permits(c.get("grants"), "assess", scope))
+        return c.json(
+          {
+            error:
+              "requires 'assess' permission for this study to record sponsor assessments or expectedness overrides",
+          },
+          403,
+        );
       const r = await createCase(db, actor, {
         ...toSections(b),
         assessments: toAssessments(b.assessments),

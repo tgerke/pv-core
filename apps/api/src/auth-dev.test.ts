@@ -210,6 +210,54 @@ describe("authorization by grant scope (§11.10(g), ADR-0015)", () => {
         .status,
     ).toBe(200);
   });
+
+  it("sponsor assessments and expectedness overrides at case creation need 'assess' (403); the reporter's own assessment travels with 'enter'", async () => {
+    const withAssessment = (assessment: Record<string, unknown>) =>
+      JSON.stringify({
+        study_id: fx.studyId,
+        product_id: fx.productId,
+        first_received_date: fx.today,
+        events: [{ seq: 1, reported_term: "Seizure" }],
+        drugs: [
+          { seq: 1, role: "suspect", product_id: fx.productId, name_as_reported: "CORC-101" },
+        ],
+        assessments: [{ drug_seq: 1, event_seq: 1, reasonable_possibility: true, ...assessment }],
+      });
+    const post = (headers: Record<string, string>, body: string) =>
+      app.request("/cases", { method: "POST", headers, body });
+
+    const sponsor = { assessor: "sponsor" };
+    const denied = await post(PROCESSOR, withAssessment(sponsor));
+    expect(denied.status).toBe(403);
+    expect(((await denied.json()) as { error: string }).error).toMatch(/'assess'/);
+    expect((await post(INGEST, withAssessment(sponsor))).status).toBe(403);
+    expect(
+      (
+        await post(
+          PROCESSOR,
+          withAssessment({
+            assessor: "reporter",
+            expectedness_override: "unexpected",
+            expectedness_rationale: "severity exceeds the listing",
+          }),
+        )
+      ).status,
+    ).toBe(403);
+
+    expect((await post(PROCESSOR, withAssessment({ assessor: "reporter" }))).status).toBe(201);
+
+    const allowed = await post(REVIEWER, withAssessment(sponsor));
+    expect(allowed.status).toBe(201);
+    const { case_id } = (await allowed.json()) as { case_id: string };
+    const detail = (await (await app.request(`/cases/${case_id}`, { headers: ADMIN })).json()) as {
+      versions: {
+        assessments: { assessor: string }[];
+        events: { sponsor_assessed: boolean }[];
+      }[];
+    };
+    expect(detail.versions[0]!.assessments.map((a) => a.assessor)).toEqual(["sponsor"]);
+    expect(detail.versions[0]!.events[0]!.sponsor_assessed).toBe(true);
+  });
 });
 
 describe("signing re-authentication (§11.200)", () => {

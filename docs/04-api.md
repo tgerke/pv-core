@@ -39,9 +39,13 @@ Auth: `Authorization: Bearer <token>`. Two modes, selected by `AUTH_MODE`:
 Either way the identity must hold an `access_grant` row: roles (`admin`, `case_processor`,
 `medical_reviewer`, `read_only`, `ingest`) map to operations (read / enter / assess / sign /
 submit / administer), scoped to a sponsor organization, to one study, or unscoped
-(ADR-0015). Denials are 403 and name the missing permission. `GET /me` returns the
-caller's person, grants, and permitted operations, so a client can decide which surface
-to render. `ingest` is enter-only: a source system pushes cases in and reads nothing back.
+(ADR-0015). Denials are 403 and name the missing permission. Where the operation depends
+on the body, the check does too: `POST /cases` may carry assessments, and a row with
+`assessor: sponsor` or an expectedness override needs `assess` for that study, the same
+gate as `PUT /case-versions/{id}/assessments`; a body with only the reporter's assessment
+needs `enter`. `GET /me` returns the caller's person, grants, and permitted operations, so a
+client can decide which surface to render. `ingest` is enter-only: a source system pushes
+cases in and reads nothing back.
 
 ## The safety physician's morning, from R
 
@@ -144,7 +148,9 @@ DBI::dbGetQuery(con, "SELECT protocol_number, destination_name, pct_on_time, ove
 ## Sponsor judgments: assessments and anticipated designations
 
 - `PUT /case-versions/{id}/assessments`: the drug-by-event causality rows for both
-  assessors, expectedness overrides with rationale. Gated `assess`.
+  assessors, expectedness overrides with rationale. Gated `assess`, as is a sponsor row or
+  an expectedness override carried in a `POST /cases` body (the reporter's row travels
+  with `enter`).
 - `PUT /case-versions/{id}/designations`: the sponsor's per-event designation as
   anticipated in the study population (naming a concept on the study's list) or not.
   Gated `assess`, never accepted on `POST /cases`; the clock resyncs and the version hash

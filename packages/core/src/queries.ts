@@ -262,8 +262,8 @@ export async function auditEvents(
   filter: { entityType?: string; entityId?: string; actorId?: string; limit?: number } = {},
 ): Promise<Row[]> {
   return sql`
-    SELECT ae.id, ae.occurred_at, ae.actor_id, ae.actor_label, ae.action, ae.entity_type, ae.entity_id, ae.prev_hash, ae.hash,
-      p.given_name || ' ' || p.family_name AS actor_name
+    SELECT ae.id, ae.occurred_at, ae.actor_id, ae.actor_label, ae.action, ae.entity_type, ae.entity_id, ae.before, ae.after,
+      ae.prev_hash, ae.hash, p.given_name || ' ' || p.family_name AS actor_name
     FROM audit_event ae LEFT JOIN person p ON p.id = ae.actor_id
     WHERE (${filter.entityType ?? null}::text IS NULL OR ae.entity_type = ${filter.entityType ?? null}::text)
       AND (${filter.entityId ?? null}::text IS NULL OR ae.entity_id = ${filter.entityId ?? null}::text)

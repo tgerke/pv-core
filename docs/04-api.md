@@ -139,6 +139,17 @@ DBI::dbGetQuery(con, "SELECT protocol_number, destination_name, pct_on_time, ove
                       FROM v_reporting_compliance ORDER BY 1, 2")
 ```
 
+## Renderings, exports, and the digest
+
+- `GET /case-versions/{id}/cioms1.pdf` and `/medwatch-3500a.pdf`: CIOMS I and Form FDA
+  3500A rendered from the version, the version hash in the footer (ADR-0012).
+- `GET /case-versions/{id}/e2b.json`: the E2B(R3)-shaped export keyed by element IDs
+  (ADR-0009; not schema-validated XML).
+- `GET /files/{sha256}`: the bytes behind any attachment or stored payload, scoped to the
+  case that holds them (documented informally; binary response).
+- `GET /studies/{id}/digest`: the reminders digest as `pnpm digest` would mail it, with
+  its derived recipient list (ADR-0014).
+
 ## Errors
 
 JSON `{ "error": "..." }` with the status the domain implies: 400 invalid input, 401

@@ -62,7 +62,11 @@ A duplicate or erroneous case is **nullified**, with a reason. The case keeps it
 accepts no further versions, and its open obligations read "not required"; if the case
 had already been submitted, a nullification report is owed and tracked like any other.
 
-## The reporting page
+## The reporting page and the digest
 
 The **Reporting** page is the same information across studies, grouped by due date and
-filterable by status, with on-time metrics per study and destination.
+filterable by status, with on-time metrics per study and destination. The same content
+goes out as a plain-text email once a day (or however often the team schedules it) to
+everyone whose grant covers the study: overdue and due-soon obligations, intake items,
+cases waiting in medical review, unassessed causality, and the audit-chain status. The
+digest stores nothing; it is a reading of the record at send time.

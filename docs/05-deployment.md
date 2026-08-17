@@ -61,6 +61,23 @@ pnpm db:import-meddra -- ...          # licensed release
 pnpm --filter @pv-core/api start      # connects as pv_app
 ```
 
+## Reminders digest
+
+`pnpm digest` reads the derived views and mails one plain-text summary per study (overdue
+and due-soon obligations, intake items, stale reviews, unassessed causality, chain
+status) to the people whose grants cover the study. It is stateless; schedule it from
+cron at whatever cadence the safety team wants:
+
+```sh
+# weekday mornings at 07:00 local, from a checkout
+0 7 * * 1-5  cd /opt/pv-core && pnpm digest
+# or against the compose stack (the api image ships tools/)
+0 7 * * 1-5  docker compose exec api pnpm digest
+```
+
+`GET /studies/{id}/digest` serves the same content, so what the email says is never
+terminal-only knowledge.
+
 ## Backups and verification
 
 Back up the Postgres volume and the object-store bucket together; a submission record

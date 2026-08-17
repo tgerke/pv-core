@@ -49,16 +49,28 @@ Then open `http://localhost:5176` (case queue) and `http://localhost:8789/docs` 
 reference).
 
 ```sh
-pnpm test                   # includes DB-level audit-immutability tests
+pnpm test                   # includes DB-level audit-immutability and clock-engine tests
 pnpm check                  # lint + typecheck + test
+pnpm validation:iq          # installation qualification against the live env
+pnpm validation:artifacts   # OQ report + requirement traceability matrix
+pnpm digest -- --dry-run    # the reminders digest, printed instead of mailed
 ```
 
 ## Status
 
-Scaffold. The vertical slice (schema, engine, API, web, docs) is landing commit by
-commit; see [docs/06-roadmap.md](docs/06-roadmap.md) for what a CRO "build us a safety
-database" engagement needs and how far this is from it. It is not validated software; the
-formal CSV program is organizational work.
+Working vertical slice plus the CRO-readiness pass: E2B(R3)-shaped cases with
+signature-locked versions, a reporting-obligation engine whose 7- and 15-day clocks are
+derived on every read (ICH E2A, 21 CFR 312.32, Regulation (EU) 536/2014 Article 42),
+expectedness against dated reference safety information, DSUR line listings, CIOMS I and
+Form FDA 3500A rendered from the signed version, an E2B(R3)-shaped JSON export,
+content-addressed attachments and payloads (WORM with S3 Object Lock), a reminders
+digest, OIDC with §11.200 re-authentication, sponsor-scoped grants for a multi-sponsor
+CRO instance, a verbatim MedDRA importer, and generated IQ/OQ validation artifacts. What
+still stands between this and a CRO "build us a safety database" engagement is written
+down in [docs/06-roadmap.md](docs/06-roadmap.md): schema-valid E2B(R3) XML, WHODrug, EDC
+reconciliation, a QC step. It is not validated software; the formal CSV program is
+organizational work. See [docs/03-compliance.md](docs/03-compliance.md) for what
+"compliant-by-design" does and does not claim.
 
 ## License
 

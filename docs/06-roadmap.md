@@ -44,7 +44,7 @@ comparison is meaningless without them.
 | Case processing lifecycle with follow-up versions, medical review, approval, closure | Yes. A QC step distinct from medical review is a gap; only a return-to-entry transition exists. |
 | MedDRA coding | Yes, against a licensed release you load yourself (`pnpm db:import-meddra`); nothing licensed ships in the repository. |
 | WHODrug coding of concomitant medications | No. The dictionary tables already accommodate it; the importer and UI do not. |
-| CIOMS I and MedWatch 3500A as submission-ready PDFs | Yes, rendered from the signed version with field lists transcribed from the official forms (ADR-0012). |
+| CIOMS I and MedWatch 3500A as submission-ready PDFs | Yes, rendered from the signed version with field lists transcribed from the official forms (ADR-0012), stored as the submission payload. |
 | An E2B(R3) file a regulator or EudraVigilance accepts | Partly. Export is JSON keyed by E2B(R3) element IDs. Schema-valid XML waits until the ICH schema package is in the verified source library (ADR-0009). |
 | Gateway transmission | Boundary; see above. |
 | 7-day and 15-day clocks, compliance metrics, reminders | Yes: the reporting-obligation engine, `v_reporting_compliance`, and `pnpm digest`. |
@@ -53,7 +53,7 @@ comparison is meaningless without them.
 | PSUR/PBRER | Boundary this phase. |
 | SAE reconciliation with the EDC | No. The intake seam and a reconciliation listing are the next arc. |
 | SSO, role-based access, sponsor segregation on one instance | Yes: OIDC, grants scoped to a sponsor organization or a study, DML-only runtime role. |
-| Validation documentation | Generated IQ/OQ reports and a requirement-to-test traceability matrix, if the last commit of the pass lands. The CSV program is organizational. |
+| Validation documentation | Generated IQ/OQ reports and a requirement-to-test traceability matrix (`docs/validation/`). The CSV program is organizational. |
 | Duplicate detection, literature monitoring, signal detection | No. |
 
 ## Genuine gaps

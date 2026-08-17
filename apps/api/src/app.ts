@@ -288,9 +288,11 @@ export function buildApp(db: Db, sql: Sql) {
         "Pharmacovigilance safety database for clinical trials. E2B(R3)-shaped cases with signature-locked versions, a reporting-obligation engine whose clocks are derived on every read, DSUR line listings, and a hash-chained audit trail. The web app consumes exactly this API.",
     },
   });
+  // The spec URL is relative so the page also works behind the web app's /api
+  // proxy (Vite in dev, nginx in the image), where /openapi.json would 404.
   app.get("/docs", (c) =>
     c.html(`<!doctype html><html><head><title>pv-core API</title></head><body>
-<script id="api-reference" data-url="/openapi.json"></script>
+<script id="api-reference" data-url="openapi.json"></script>
 <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
 </body></html>`),
   );

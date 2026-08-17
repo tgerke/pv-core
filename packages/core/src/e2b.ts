@@ -80,7 +80,8 @@ export interface E2bExport {
     version_sha256: string;
     dictionary: { version: string; is_demo_subset: boolean };
   };
-  [element: string]: unknown;
+  // biome-ignore lint/suspicious/noExplicitAny: element values are heterogeneous JSON
+  [element: string]: any;
 }
 
 export async function buildE2bJson(sql: Sql, versionId: string): Promise<E2bExport> {

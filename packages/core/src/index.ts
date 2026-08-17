@@ -85,6 +85,7 @@ export {
   listRules,
   listSites,
   listStudies,
+  type Row,
   reportability,
   reportingCompliance,
   ruleMatches,

@@ -7,7 +7,9 @@ import type { ReadableScope } from "./authz.js";
  * the caller's readable scope (ADR-0015).
  */
 
-type Row = Record<string, unknown>;
+// SQL rows are dynamic; the API's response schemas name the columns that matter.
+// biome-ignore lint/suspicious/noExplicitAny: view rows are untyped by design
+export type Row = Record<string, any>;
 
 /** SQL fragment restricting rows to what the grants can read. */
 function scopeFilter(sql: Sql, scope: ReadableScope, studyCol: string, sponsorCol: string) {

@@ -13,8 +13,9 @@ const ROLE_OPERATIONS: Record<AccessRole, readonly Operation[]> = {
   admin: ["read", "enter", "assess", "sign", "submit", "administer"],
   // Intake, data entry, follow-ups, submissions and acknowledgements.
   case_processor: ["read", "enter", "submit"],
-  // Assessments, expectedness overrides, unblinding facts, waivers, signing.
-  medical_reviewer: ["read", "assess", "sign"],
+  // Assessments, expectedness overrides, unblinding facts, waivers, signing;
+  // may also correct data (narrative, sender comments) before signing.
+  medical_reviewer: ["read", "enter", "assess", "sign"],
   read_only: ["read"],
   // Machine identities (source-system intake): create cases, children, and
   // attachments; never assess, sign, or submit. No read either: a service

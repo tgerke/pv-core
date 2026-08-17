@@ -39,10 +39,33 @@ describe("regulatory form renderings (ADR-0012)", () => {
       ...(await validCaseInput(fx)),
       events: [
         { seq: 1, reportedTerm: "Nausea", lltCode: await fx.llt("Nausea"), outcome: "recovered" },
-        { seq: 2, reportedTerm: "Seizure", lltCode: await fx.llt("Seizure"), seriousHospitalization: true, outcome: "recovered", onsetDate: fx.day(-4) },
+        {
+          seq: 2,
+          reportedTerm: "Seizure",
+          lltCode: await fx.llt("Seizure"),
+          seriousHospitalization: true,
+          outcome: "recovered",
+          onsetDate: fx.day(-4),
+        },
       ],
-      drugs: [{ seq: 1, role: "suspect", productId: fx.productId, nameAsReported: "CORC-101", actionTaken: "drug_withdrawn" }],
-      assessments: [{ drugSeq: 1, eventSeq: 2, assessor: "sponsor", reasonablePossibility: true, rechallenge: "did_not_recur" }],
+      drugs: [
+        {
+          seq: 1,
+          role: "suspect",
+          productId: fx.productId,
+          nameAsReported: "CORC-101",
+          actionTaken: "drug_withdrawn",
+        },
+      ],
+      assessments: [
+        {
+          drugSeq: 1,
+          eventSeq: 2,
+          assessor: "sponsor",
+          reasonablePossibility: true,
+          rechallenge: "did_not_recur",
+        },
+      ],
     });
     const s = await loadVersionSnapshot(sql, c.caseVersionId);
     expect(primaryEvent(s)?.reported_term).toBe("Seizure");
@@ -52,6 +75,8 @@ describe("regulatory form renderings (ADR-0012)", () => {
   });
 
   it("refuses to render an unknown version", async () => {
-    await expect(renderCiomsI(sql, "00000000-0000-0000-0000-000000000000")).rejects.toThrow(/not found/);
+    await expect(renderCiomsI(sql, "00000000-0000-0000-0000-000000000000")).rejects.toThrow(
+      /not found/,
+    );
   });
 });

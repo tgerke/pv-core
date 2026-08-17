@@ -10,6 +10,7 @@ import {
   caseAuditTrail,
   caseDetail,
   caseQueue,
+  collectDigest,
   createCase,
   createDestination,
   createOrganization,
@@ -20,6 +21,7 @@ import {
   createSite,
   createStudy,
   type DrugInput,
+  digestRecipients,
   dsurSaeSummary,
   dsurSarLineListing,
   type EventInput,
@@ -46,6 +48,7 @@ import {
   recordSubmission,
   recordUnblinding,
   renderCiomsI,
+  renderDigest,
   renderMedWatch3500A,
   reportability,
   reportingCompliance,
@@ -610,6 +613,30 @@ export function buildApp(db: Db, sql: Sql) {
     "DSUR cumulative SAE tabulation for a study",
     true,
     (s, c) => dsurSaeSummary(sql, scopeOf(c), s),
+  );
+
+  // The digest as the email would read it, plus its derived recipient list
+  // (ADR-0014): what the cron job sends is never terminal-only knowledge.
+  app.openapi(
+    createRoute({
+      method: "get",
+      path: "/studies/{studyId}/digest",
+      security,
+      summary:
+        "The reminders digest for a study: overdue and due-soon obligations, intake items, stale reviews, unassessed causality, chain status",
+      request: { params: P.studyId },
+      responses: { 200: json(RowSchema, "Digest data, rendered text, and recipients") },
+    }),
+    async (c) => {
+      const studyId = c.req.valid("param").studyId;
+      const data = await collectDigest(sql, studyId);
+      const rendered = renderDigest(data);
+      const recipients = await digestRecipients(sql, studyId);
+      return c.json(
+        cast<Row>({ ...data, subject: rendered.subject, text: rendered.text, recipients }),
+        200,
+      );
+    },
   );
 
   const lineListingRoute = (path: string, scoped: boolean) =>

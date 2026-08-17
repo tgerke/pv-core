@@ -68,6 +68,13 @@ export {
   searchTerms,
   type TermRow,
 } from "./dictionaries.js";
+export {
+  attentionCount,
+  collectDigest,
+  type DigestData,
+  digestRecipients,
+  renderDigest,
+} from "./digest.js";
 export { buildE2bJson, type E2bExport } from "./e2b.js";
 export { CoreError, type CoreErrorCode, fromPgError } from "./errors.js";
 export { renderCiomsI, renderMedWatch3500A } from "./forms.js";

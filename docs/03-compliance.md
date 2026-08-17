@@ -38,6 +38,8 @@ text in the maintainers' standards library (ADR-0010).
 | Single-subject unblinding for expedited cases (E2A §III.D; Annex III §2.5) | `case_unblinding` fact recorded from the randomization system's code-break; arms never leave that table except through the DSUR aggregate (ADR-0008) |
 | DSUR line listing of serious adverse reactions and cumulative SAE tabulation by SOC and arm (E2F §3.7.2, §3.7.3) | `v_dsur_sar_line_listing`, `v_dsur_sae_summary`, served at `/dsur/*` |
 | Regulator acknowledgements (E2B(R3) IG §4.0) | `submission_acknowledgement` with the AA/AE/AR/CA/CR codes or a manual receipt; a rejected acknowledgement leaves the obligation visibly `submitted` |
+| Anticipated serious adverse events are not reported to FDA as individual IND safety reports; they are assessed in aggregate (21 CFR 312.32(c)(1)(i)(C); FDA Sponsor Responsibilities, Dec 2025, §III.C, §IV.A.2.a, §V.A, §VI.A) | `study_anticipated_event` + immutable terms per study, dated like an RSI version, a rate never stored without its basis (CHECK); `case_event_designation` is the sponsor's per-event judgment (`assess` only, cloned, locked, hashed); `reporting_rule.excludes_anticipated` holds the FDA IND rules back and leaves the EU CTR rules alone; `v_rule_anticipated_exclusion` names every held-back rule (ADR-0019) |
+| Investigator and sponsor causality both recorded and both transmitted; the sponsor never downgrades the investigator's (Reg. 536/2014 Annex III §2.1 ¶4; E2B(R3) IG §G.k.9.i; E2F §3.7.2(l)); the sponsor's judgment decides an IND safety report (312.32(c)(1)(i); FDA Sponsor Responsibilities, Dec 2025, §IV.A) while E2A §III.A.1 counts either party | `case_assessment` rows per assessor; `causality_disagreement` derived in `v_case_event_reportability`, rolled up to the queue, the DSUR `sponsor_comment`, and the digest; `reporting_rule.causality_basis` (`sponsor` on the seeded FDA IND rules, `either` on the EU, investigator, and IRB rules) (ADR-0020) |
 
 ## Honest gaps (current phase)
 
@@ -50,7 +52,12 @@ text in the maintainers' standards library (ADR-0010).
    the code forces that choice.
 3. **E2B(R3) export is JSON, not schema-validated XML.** The export carries the IG's element
    IDs and code values, but a regulator gateway wants the XML message, and the ICH schema
-   package is not in the verified source library (ADR-0009).
+   package is not in the verified source library (ADR-0009). This gap has grown: since
+   April 1, 2026, IND safety reports for serious and unexpected suspected adverse reactions
+   from non-exempt INDs must reach FAERS as E2B(R3) ICSRs through the ESG or the Safety
+   Reporting Portal (FDA, Providing Regulatory Submissions in Electronic Format: IND Safety
+   Reports, April 2024, §IV.A). Noncommercial INDs stay exempt and may still send Form FDA
+   3500A as a PDF, which pv-core renders from the signed version.
 4. **WORM depends on deployment.** The s3 driver with Object Lock extends immutability to
    attachment and payload bytes; the default local-directory driver does not.
 5. **One instance per CRO; sponsors are a scope, not a tenant.** Segregation rests on grants
@@ -58,3 +65,10 @@ text in the maintainers' standards library (ADR-0010).
 6. **`expected_submission` is derived state.** The sync may remove an obligation a still-open
    version stops triggering; the removal is audited, so the history is in `audit_event`,
    not in the row.
+7. **The aggregate analysis of anticipated SAEs is not performed here.** pv-core records the
+   study's anticipated-event list, the sponsor's designations, and which reports were held
+   back, and it lists them so nothing is held silently. It holds no exposure denominator
+   (participants or participant-years) and no per-arm view of these events, so the
+   observed-versus-predicted comparison and the unblinding trigger of FDA's December 2025
+   guidance (§VI.C) happen in the sponsor's safety assessment process, not in this
+   database.

@@ -14,6 +14,18 @@ checked against the source text ([ADR-0010](/pv-core/decisions/#adr-0010)).
   otherwise medically important (E2A §II.B). Serious is not severe.
 - **Unexpected**: not consistent in nature or severity with the reference safety
   information (E2A §II.C).
+- **Anticipated (FDA)**: likely to occur in the study population independent of the drug,
+  as a consequence of the disease, of age, or of a background regimen (FDA, Sponsor
+  Responsibilities: Safety Reporting Requirements and Safety Assessment for IND and BA/BE
+  Studies, December 2025, §III.C). Not the same as expected: an anticipated event that is
+  not in the brochure is still unexpected, but the sponsor lists it in the safety
+  surveillance plan, does not report it to FDA as an individual IND safety report, and
+  reviews it in aggregate (§IV.A.2.a, §V.A). In pv-core it is a sponsor designation
+  against the study's list, and only rules marked "excludes anticipated events" act on it.
+- **Causality disagreement**: the investigator's and the sponsor's recorded causality
+  opinions differ; both stay on the record and travel with the report (Regulation (EU)
+  536/2014 Annex III §2.1 ¶4), and each rule's causality basis says whose opinion starts
+  its clock.
 - **SUSAR**: a suspected unexpected serious adverse reaction: serious, unexpected, and
   reasonably related, judged event by event.
 - **Reference safety information (RSI)**: the Investigator's Brochure section or label

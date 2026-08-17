@@ -11,6 +11,7 @@ import {
   caseDetail,
   caseQueue,
   collectDigest,
+  createAnticipatedEvent,
   createCase,
   createDestination,
   createOrganization,
@@ -25,11 +26,13 @@ import {
   dsurSaeSummary,
   dsurSarLineListing,
   type EventInput,
+  endAnticipatedEvent,
   endRsiVersion,
   endRule,
   expectedSubmissions,
   grantAccess,
   importDictionary,
+  listAnticipatedEvents,
   listDestinations,
   listDictionaries,
   listOrganizations,
@@ -82,10 +85,12 @@ import {
 } from "./auth.js";
 import {
   AckBody,
+  AnticipatedEventBody,
   AssessmentBody,
   AuditEventSchema,
   CaseDetailSchema,
   CreateCaseBody,
+  DesignationsBody,
   DestinationBody,
   EndBody,
   ErrorSchema,
@@ -133,6 +138,7 @@ const P = {
   dictionaryId: z.object({ dictionaryId: z.string().uuid() }),
   productId: z.object({ productId: z.string().uuid() }),
   rsiVersionId: z.object({ rsiVersionId: z.string().uuid() }),
+  anticipatedEventId: z.object({ anticipatedEventId: z.string().uuid() }),
   ruleId: z.object({ ruleId: z.string().uuid() }),
   grantId: z.object({ grantId: z.string().uuid() }),
 } as const;
@@ -330,6 +336,13 @@ export function buildApp(db: Db, sql: Sql) {
     auth,
     requirePermission(sql, "assess", "versionId"),
   );
+  // The anticipated designation is the sponsor's judgment: same gate as the
+  // sponsor's causality assessment.
+  app.use(
+    "/case-versions/:versionId/designations",
+    auth,
+    requirePermission(sql, "assess", "versionId"),
+  );
   app.use(
     "/case-versions/:versionId/transition",
     auth,
@@ -391,6 +404,14 @@ export function buildApp(db: Db, sql: Sql) {
     "/rsi-versions/:rsiVersionId/*",
     auth,
     requirePermission(sql, "administer", "rsiVersionId"),
+  );
+  // POST /anticipated-events carries its study in the body; the handler
+  // completes the scope check after parsing (as POST /cases does).
+  app.use("/anticipated-events", auth, requirePermission(sql, readOrAdminister));
+  app.use(
+    "/anticipated-events/:anticipatedEventId/*",
+    auth,
+    requirePermission(sql, "administer", "anticipatedEventId"),
   );
   app.use("/destinations", auth, requirePermission(sql, readOrAdminister));
   app.use("/reporting-rules", auth, requirePermission(sql, readOrAdminister));
@@ -708,6 +729,8 @@ export function buildApp(db: Db, sql: Sql) {
         productId: b.product_id,
         reportType: b.report_type,
         firstReceivedDate: b.first_received_date,
+        receivedVia: b.received_via,
+        receivedRef: b.received_ref,
         infoReceivedDate: b.info_received_date,
         awarenessDate: b.awareness_date,
         awarenessRationale: b.awareness_rationale,
@@ -974,6 +997,34 @@ export function buildApp(db: Db, sql: Sql) {
     async (c) => {
       await updateSections(db, c.get("actor"), c.req.valid("param").versionId, {
         assessments: toAssessments(c.req.valid("json").assessments),
+      });
+      return c.json({ ok: true }, 200);
+    },
+  );
+  app.openapi(
+    createRoute({
+      method: "put",
+      path: "/case-versions/{versionId}/designations",
+      security,
+      summary:
+        "Replace the sponsor's per-event designations of an open version: anticipated in the study population (naming a concept on the study's list) or not",
+      description:
+        "Sponsor-only (assess). An anticipated designation holds the event back from every rule that excludes anticipated events (FDA IND safety reporting, December 2025 guidance §IV.A.2.a, §V.A); other rules are untouched. The clock resyncs in the same transaction; the version's hash covers the designations.",
+      request: { params: P.versionId, body: body(DesignationsBody) },
+      responses: {
+        200: json(z.object({ ok: z.boolean() }), "Updated"),
+        400: json(ErrorSchema, "Invalid"),
+        423: json(ErrorSchema, "Locked by a signature"),
+      },
+    }),
+    async (c) => {
+      await updateSections(db, c.get("actor"), c.req.valid("param").versionId, {
+        designations: c.req.valid("json").designations.map((d) => ({
+          eventSeq: d.event_seq,
+          anticipated: d.anticipated,
+          anticipatedEventId: d.anticipated_event_id,
+          rationale: d.rationale,
+        })),
       });
       return c.json({ ok: true }, 200);
     },
@@ -1346,6 +1397,17 @@ export function buildApp(db: Db, sql: Sql) {
   listRoute("/products", "Products with their RSI versions and listed terms", (c) =>
     listProducts(sql, scopeOf(c)),
   );
+  listRoute(
+    "/anticipated-events",
+    "Anticipated serious adverse events per study (the safety surveillance plan's list, with terms; ended concepts last)",
+    (c) => listAnticipatedEvents(sql, scopeOf(c)),
+  );
+  viewRoute(
+    "/studies/{studyId}/anticipated-events",
+    "Anticipated serious adverse events of one study",
+    true,
+    (s, c) => listAnticipatedEvents(sql, scopeOf(c), s),
+  );
   listRoute("/destinations", "Reporting destinations", (c) => listDestinations(sql, scopeOf(c)));
   listRoute("/reporting-rules", "Reporting rules (rows; ended rules last)", (c) =>
     listRules(sql, scopeOf(c)),
@@ -1415,6 +1477,7 @@ export function buildApp(db: Db, sql: Sql) {
         related: b.related,
         fatalOrLifeThreatening: b.fatal_or_life_threatening,
         causalityBasis: b.causality_basis,
+        excludesAnticipated: b.excludes_anticipated,
         requiresPriorSubmission: b.requires_prior_submission,
         timelineDays: b.timeline_days,
         dueSoonDays: b.due_soon_days,
@@ -1481,9 +1544,48 @@ export function buildApp(db: Db, sql: Sql) {
       return c.json(cast<Row>(r), 201);
     },
   );
+  app.openapi(
+    createRoute({
+      method: "post",
+      path: "/anticipated-events",
+      security,
+      summary:
+        "Add an anticipated serious adverse event to a study's list: one medical concept, its Preferred Terms, and the plan reference or the clinical justification",
+      description:
+        "FDA, Sponsor Responsibilities (December 2025) §V.A and §VI.A. A predicted rate is optional and never stored without its unit and basis. Concepts end (effective_to), they are never edited or deleted.",
+      request: { body: body(AnticipatedEventBody) },
+      responses: {
+        201: json(RowSchema, "Created"),
+        400: json(ErrorSchema, "Invalid"),
+        403: json(ErrorSchema, "Not permitted for this study"),
+      },
+    }),
+    async (c) => {
+      const b = c.req.valid("json");
+      const scope = await resolveScope(sql, "studyId", b.study_id);
+      if (!scope) return c.json({ error: "study not found" }, 400);
+      if (!permits(c.get("grants"), "administer", scope))
+        return c.json({ error: "requires 'administer' permission for this study" }, 403);
+      const r = await createAnticipatedEvent(db, c.get("actor"), {
+        studyId: b.study_id,
+        label: b.label,
+        prespecified: b.prespecified,
+        planReference: b.plan_reference,
+        justification: b.justification,
+        predictedRate: b.predicted_rate,
+        rateUnit: b.rate_unit,
+        rateBasis: b.rate_basis,
+        effectiveFrom: b.effective_from,
+        approvedBy: b.approved_by ?? c.get("actor").personId,
+        dictionaryId: b.dictionary_id,
+        terms: b.terms.map((t) => ({ ptCode: t.pt_code, ptTerm: t.pt_term })),
+      });
+      return c.json(cast<Row>(r), 201);
+    },
+  );
   const endRoute = (
     path: string,
-    param: "rsiVersionId" | "ruleId",
+    param: "rsiVersionId" | "ruleId" | "anticipatedEventId",
     summary: string,
     fn: (id: string, effectiveTo: string, actor: Env["Variables"]["actor"]) => Promise<void>,
   ) =>
@@ -1512,6 +1614,12 @@ export function buildApp(db: Db, sql: Sql) {
     "ruleId",
     "End a reporting rule (rules are never edited in place)",
     (id, to, a) => endRule(db, a, id, to),
+  );
+  endRoute(
+    "/anticipated-events/{anticipatedEventId}/end",
+    "anticipatedEventId",
+    "End an anticipated serious adverse event concept (its one permitted mutation)",
+    (id, to, a) => endAnticipatedEvent(db, a, id, to),
   );
   app.openapi(
     createRoute({

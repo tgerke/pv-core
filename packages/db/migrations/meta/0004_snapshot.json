@@ -1,0 +1,4788 @@
+{
+  "id": "2ddf915c-97dd-4d0f-80fa-7150badd7fea",
+  "prevId": "1852a131-b493-4944-8fa8-47b789de719d",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.access_grant": {
+      "name": "access_grant",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "access_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "study_id": {
+          "name": "study_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "granted_at": {
+          "name": "granted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "access_grant_person_idx": {
+          "name": "access_grant_person_idx",
+          "columns": [
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "access_grant_person_id_person_id_fk": {
+          "name": "access_grant_person_id_person_id_fk",
+          "tableFrom": "access_grant",
+          "tableTo": "person",
+          "columnsFrom": [
+            "person_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "access_grant_organization_id_organization_id_fk": {
+          "name": "access_grant_organization_id_organization_id_fk",
+          "tableFrom": "access_grant",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "access_grant_study_id_study_id_fk": {
+          "name": "access_grant_study_id_study_id_fk",
+          "tableFrom": "access_grant",
+          "tableTo": "study",
+          "columnsFrom": [
+            "study_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.app_meta": {
+      "name": "app_meta",
+      "schema": "",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.audit_event": {
+      "name": "audit_event",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_label": {
+          "name": "actor_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entity_type": {
+          "name": "entity_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entity_id": {
+          "name": "entity_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "before": {
+          "name": "before",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "after": {
+          "name": "after",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "prev_hash": {
+          "name": "prev_hash",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hash": {
+          "name": "hash",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "audit_event_entity_idx": {
+          "name": "audit_event_entity_idx",
+          "columns": [
+            {
+              "expression": "entity_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "entity_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.case_assessment": {
+      "name": "case_assessment",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "case_version_id": {
+          "name": "case_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_drug_id": {
+          "name": "case_drug_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_event_id": {
+          "name": "case_event_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "assessor": {
+          "name": "assessor",
+          "type": "assessor_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reasonable_possibility": {
+          "name": "reasonable_possibility",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "causality_method": {
+          "name": "causality_method",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "causality_result": {
+          "name": "causality_result",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rechallenge": {
+          "name": "rechallenge",
+          "type": "rechallenge",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expectedness_override": {
+          "name": "expectedness_override",
+          "type": "expectedness",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expectedness_rationale": {
+          "name": "expectedness_rationale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rsi_version_id": {
+          "name": "rsi_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "case_assessment_unique": {
+          "name": "case_assessment_unique",
+          "columns": [
+            {
+              "expression": "case_drug_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "case_event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "assessor",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "case_assessment_version_idx": {
+          "name": "case_assessment_version_idx",
+          "columns": [
+            {
+              "expression": "case_version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "case_assessment_case_version_id_case_version_id_fk": {
+          "name": "case_assessment_case_version_id_case_version_id_fk",
+          "tableFrom": "case_assessment",
+          "tableTo": "case_version",
+          "columnsFrom": [
+            "case_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_assessment_case_drug_id_case_drug_id_fk": {
+          "name": "case_assessment_case_drug_id_case_drug_id_fk",
+          "tableFrom": "case_assessment",
+          "tableTo": "case_drug",
+          "columnsFrom": [
+            "case_drug_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_assessment_case_event_id_case_event_id_fk": {
+          "name": "case_assessment_case_event_id_case_event_id_fk",
+          "tableFrom": "case_assessment",
+          "tableTo": "case_event",
+          "columnsFrom": [
+            "case_event_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_assessment_rsi_version_id_product_rsi_version_id_fk": {
+          "name": "case_assessment_rsi_version_id_product_rsi_version_id_fk",
+          "tableFrom": "case_assessment",
+          "tableTo": "product_rsi_version",
+          "columnsFrom": [
+            "rsi_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.case_attachment": {
+      "name": "case_attachment",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_version_id": {
+          "name": "case_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "attachment_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sha256": {
+          "name": "sha256",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mime_type": {
+          "name": "mime_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "size_bytes": {
+          "name": "size_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uploaded_by": {
+          "name": "uploaded_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_system": {
+          "name": "source_system",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_ref": {
+          "name": "source_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "case_attachment_case_idx": {
+          "name": "case_attachment_case_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "case_attachment_sha_idx": {
+          "name": "case_attachment_sha_idx",
+          "columns": [
+            {
+              "expression": "sha256",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "case_attachment_case_id_case_id_fk": {
+          "name": "case_attachment_case_id_case_id_fk",
+          "tableFrom": "case_attachment",
+          "tableTo": "case",
+          "columnsFrom": [
+            "case_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_attachment_case_version_id_case_version_id_fk": {
+          "name": "case_attachment_case_version_id_case_version_id_fk",
+          "tableFrom": "case_attachment",
+          "tableTo": "case_version",
+          "columnsFrom": [
+            "case_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_attachment_uploaded_by_person_id_fk": {
+          "name": "case_attachment_uploaded_by_person_id_fk",
+          "tableFrom": "case_attachment",
+          "tableTo": "person",
+          "columnsFrom": [
+            "uploaded_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.case_drug": {
+      "name": "case_drug",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "case_version_id": {
+          "name": "case_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seq": {
+          "name": "seq",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "drug_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name_as_reported": {
+          "name": "name_as_reported",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_blinded": {
+          "name": "is_blinded",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "lot_number": {
+          "name": "lot_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "indication_pt_code": {
+          "name": "indication_pt_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "indication_pt_term": {
+          "name": "indication_pt_term",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dose_text": {
+          "name": "dose_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dose_value": {
+          "name": "dose_value",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dose_unit": {
+          "name": "dose_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "route": {
+          "name": "route",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "action_taken": {
+          "name": "action_taken",
+          "type": "action_taken",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "case_drug_seq_unique": {
+          "name": "case_drug_seq_unique",
+          "columns": [
+            {
+              "expression": "case_version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "seq",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "case_drug_case_version_id_case_version_id_fk": {
+          "name": "case_drug_case_version_id_case_version_id_fk",
+          "tableFrom": "case_drug",
+          "tableTo": "case_version",
+          "columnsFrom": [
+            "case_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_drug_product_id_product_id_fk": {
+          "name": "case_drug_product_id_product_id_fk",
+          "tableFrom": "case_drug",
+          "tableTo": "product",
+          "columnsFrom": [
+            "product_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.case_event": {
+      "name": "case_event",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "case_version_id": {
+          "name": "case_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seq": {
+          "name": "seq",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reported_term": {
+          "name": "reported_term",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dictionary_id": {
+          "name": "dictionary_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "llt_code": {
+          "name": "llt_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "llt_term": {
+          "name": "llt_term",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pt_code": {
+          "name": "pt_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pt_term": {
+          "name": "pt_term",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hlt_code": {
+          "name": "hlt_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hlt_term": {
+          "name": "hlt_term",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hlgt_code": {
+          "name": "hlgt_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hlgt_term": {
+          "name": "hlgt_term",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "soc_code": {
+          "name": "soc_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "soc_term": {
+          "name": "soc_term",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "serious_death": {
+          "name": "serious_death",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "serious_life_threatening": {
+          "name": "serious_life_threatening",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "serious_hospitalization": {
+          "name": "serious_hospitalization",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "serious_disabling": {
+          "name": "serious_disabling",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "serious_congenital_anomaly": {
+          "name": "serious_congenital_anomaly",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "serious_other_medically_important": {
+          "name": "serious_other_medically_important",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "onset_date": {
+          "name": "onset_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "event_outcome",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'unknown'"
+        },
+        "medically_confirmed": {
+          "name": "medically_confirmed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "occur_country": {
+          "name": "occur_country",
+          "type": "char(2)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "case_event_seq_unique": {
+          "name": "case_event_seq_unique",
+          "columns": [
+            {
+              "expression": "case_version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "seq",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "case_event_pt_idx": {
+          "name": "case_event_pt_idx",
+          "columns": [
+            {
+              "expression": "pt_code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "case_event_case_version_id_case_version_id_fk": {
+          "name": "case_event_case_version_id_case_version_id_fk",
+          "tableFrom": "case_event",
+          "tableTo": "case_version",
+          "columnsFrom": [
+            "case_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_event_dictionary_id_dictionary_id_fk": {
+          "name": "case_event_dictionary_id_dictionary_id_fk",
+          "tableFrom": "case_event",
+          "tableTo": "dictionary",
+          "columnsFrom": [
+            "dictionary_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.case_event_designation": {
+      "name": "case_event_designation",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "case_version_id": {
+          "name": "case_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_event_id": {
+          "name": "case_event_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "anticipated": {
+          "name": "anticipated",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "anticipated_event_id": {
+          "name": "anticipated_event_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rationale": {
+          "name": "rationale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "case_event_designation_event_unique": {
+          "name": "case_event_designation_event_unique",
+          "columns": [
+            {
+              "expression": "case_event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "case_event_designation_version_idx": {
+          "name": "case_event_designation_version_idx",
+          "columns": [
+            {
+              "expression": "case_version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "case_event_designation_case_version_id_case_version_id_fk": {
+          "name": "case_event_designation_case_version_id_case_version_id_fk",
+          "tableFrom": "case_event_designation",
+          "tableTo": "case_version",
+          "columnsFrom": [
+            "case_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_event_designation_case_event_id_case_event_id_fk": {
+          "name": "case_event_designation_case_event_id_case_event_id_fk",
+          "tableFrom": "case_event_designation",
+          "tableTo": "case_event",
+          "columnsFrom": [
+            "case_event_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_event_designation_anticipated_event_id_study_anticipated_event_id_fk": {
+          "name": "case_event_designation_anticipated_event_id_study_anticipated_event_id_fk",
+          "tableFrom": "case_event_designation",
+          "tableTo": "study_anticipated_event",
+          "columnsFrom": [
+            "anticipated_event_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.case_narrative": {
+      "name": "case_narrative",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "case_version_id": {
+          "name": "case_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "narrative": {
+          "name": "narrative",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reporter_comments": {
+          "name": "reporter_comments",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sender_diagnosis_pt_code": {
+          "name": "sender_diagnosis_pt_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sender_diagnosis_pt_term": {
+          "name": "sender_diagnosis_pt_term",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sender_comments": {
+          "name": "sender_comments",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "case_narrative_version_unique": {
+          "name": "case_narrative_version_unique",
+          "columns": [
+            {
+              "expression": "case_version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "case_narrative_case_version_id_case_version_id_fk": {
+          "name": "case_narrative_case_version_id_case_version_id_fk",
+          "tableFrom": "case_narrative",
+          "tableTo": "case_version",
+          "columnsFrom": [
+            "case_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.case_nullification": {
+      "name": "case_nullification",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nullified_by": {
+          "name": "nullified_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nullified_at": {
+          "name": "nullified_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "case_nullification_case_unique": {
+          "name": "case_nullification_case_unique",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "case_nullification_case_id_case_id_fk": {
+          "name": "case_nullification_case_id_case_id_fk",
+          "tableFrom": "case_nullification",
+          "tableTo": "case",
+          "columnsFrom": [
+            "case_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_nullification_nullified_by_person_id_fk": {
+          "name": "case_nullification_nullified_by_person_id_fk",
+          "tableFrom": "case_nullification",
+          "tableTo": "person",
+          "columnsFrom": [
+            "nullified_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.case_patient": {
+      "name": "case_patient",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "case_version_id": {
+          "name": "case_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "initials": {
+          "name": "initials",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subject_number": {
+          "name": "subject_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "study_site_id": {
+          "name": "study_site_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "age_value": {
+          "name": "age_value",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "age_unit": {
+          "name": "age_unit",
+          "type": "age_unit",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "age_group": {
+          "name": "age_group",
+          "type": "age_group",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sex": {
+          "name": "sex",
+          "type": "sex",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "weight_kg": {
+          "name": "weight_kg",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "height_cm": {
+          "name": "height_cm",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "medical_history_text": {
+          "name": "medical_history_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "death_date": {
+          "name": "death_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "death_cause_text": {
+          "name": "death_cause_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "case_patient_version_unique": {
+          "name": "case_patient_version_unique",
+          "columns": [
+            {
+              "expression": "case_version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "case_patient_case_version_id_case_version_id_fk": {
+          "name": "case_patient_case_version_id_case_version_id_fk",
+          "tableFrom": "case_patient",
+          "tableTo": "case_version",
+          "columnsFrom": [
+            "case_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_patient_study_site_id_study_site_id_fk": {
+          "name": "case_patient_study_site_id_study_site_id_fk",
+          "tableFrom": "case_patient",
+          "tableTo": "study_site",
+          "columnsFrom": [
+            "study_site_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.case_source": {
+      "name": "case_source",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "case_version_id": {
+          "name": "case_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seq": {
+          "name": "seq",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "given_name": {
+          "name": "given_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "family_name": {
+          "name": "family_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "organization": {
+          "name": "organization",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "country": {
+          "name": "country",
+          "type": "char(2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "qualification": {
+          "name": "qualification",
+          "type": "reporter_qualification",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_primary_for_regulatory": {
+          "name": "is_primary_for_regulatory",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "case_source_seq_unique": {
+          "name": "case_source_seq_unique",
+          "columns": [
+            {
+              "expression": "case_version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "seq",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "case_source_case_version_id_case_version_id_fk": {
+          "name": "case_source_case_version_id_case_version_id_fk",
+          "tableFrom": "case_source",
+          "tableTo": "case_version",
+          "columnsFrom": [
+            "case_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_source_person_id_person_id_fk": {
+          "name": "case_source_person_id_person_id_fk",
+          "tableFrom": "case_source",
+          "tableTo": "person",
+          "columnsFrom": [
+            "person_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.case_test": {
+      "name": "case_test",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "case_version_id": {
+          "name": "case_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seq": {
+          "name": "seq",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "test_date": {
+          "name": "test_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "test_name": {
+          "name": "test_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "result_text": {
+          "name": "result_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "unit": {
+          "name": "unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "comments": {
+          "name": "comments",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "case_test_seq_unique": {
+          "name": "case_test_seq_unique",
+          "columns": [
+            {
+              "expression": "case_version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "seq",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "case_test_case_version_id_case_version_id_fk": {
+          "name": "case_test_case_version_id_case_version_id_fk",
+          "tableFrom": "case_test",
+          "tableTo": "case_version",
+          "columnsFrom": [
+            "case_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.case_transition": {
+      "name": "case_transition",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_version_id": {
+          "name": "case_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "to_state": {
+          "name": "to_state",
+          "type": "workflow_state",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "transitioned_by": {
+          "name": "transitioned_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "transitioned_at": {
+          "name": "transitioned_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "case_transition_version_idx": {
+          "name": "case_transition_version_idx",
+          "columns": [
+            {
+              "expression": "case_version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "transitioned_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "case_transition_case_id_case_id_fk": {
+          "name": "case_transition_case_id_case_id_fk",
+          "tableFrom": "case_transition",
+          "tableTo": "case",
+          "columnsFrom": [
+            "case_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_transition_case_version_id_case_version_id_fk": {
+          "name": "case_transition_case_version_id_case_version_id_fk",
+          "tableFrom": "case_transition",
+          "tableTo": "case_version",
+          "columnsFrom": [
+            "case_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_transition_transitioned_by_person_id_fk": {
+          "name": "case_transition_transitioned_by_person_id_fk",
+          "tableFrom": "case_transition",
+          "tableTo": "person",
+          "columnsFrom": [
+            "transitioned_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.case_unblinding": {
+      "name": "case_unblinding",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "arm_label": {
+          "name": "arm_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "arm_role": {
+          "name": "arm_role",
+          "type": "product_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unblinded_at": {
+          "name": "unblinded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unblinded_by": {
+          "name": "unblinded_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_system": {
+          "name": "source_system",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_ref": {
+          "name": "source_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "case_unblinding_case_unique": {
+          "name": "case_unblinding_case_unique",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "case_unblinding_case_id_case_id_fk": {
+          "name": "case_unblinding_case_id_case_id_fk",
+          "tableFrom": "case_unblinding",
+          "tableTo": "case",
+          "columnsFrom": [
+            "case_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_unblinding_unblinded_by_person_id_fk": {
+          "name": "case_unblinding_unblinded_by_person_id_fk",
+          "tableFrom": "case_unblinding",
+          "tableTo": "person",
+          "columnsFrom": [
+            "unblinded_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.case_version": {
+      "name": "case_version",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_number": {
+          "name": "version_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "version_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "info_received_date": {
+          "name": "info_received_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "awareness_date": {
+          "name": "awareness_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "awareness_rationale": {
+          "name": "awareness_rationale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "received_at": {
+          "name": "received_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "dictionary_id": {
+          "name": "dictionary_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "case_version_number_unique": {
+          "name": "case_version_number_unique",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "version_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "case_version_case_id_case_id_fk": {
+          "name": "case_version_case_id_case_id_fk",
+          "tableFrom": "case_version",
+          "tableTo": "case",
+          "columnsFrom": [
+            "case_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_version_dictionary_id_dictionary_id_fk": {
+          "name": "case_version_dictionary_id_dictionary_id_fk",
+          "tableFrom": "case_version",
+          "tableTo": "dictionary",
+          "columnsFrom": [
+            "dictionary_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_version_created_by_person_id_fk": {
+          "name": "case_version_created_by_person_id_fk",
+          "tableFrom": "case_version",
+          "tableTo": "person",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.dictionary": {
+      "name": "dictionary",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "type": {
+          "name": "type",
+          "type": "dictionary_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "terms_count": {
+          "name": "terms_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "is_demo_subset": {
+          "name": "is_demo_subset",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_sha256": {
+          "name": "source_sha256",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "loaded_by": {
+          "name": "loaded_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "dictionary_type_version_unique": {
+          "name": "dictionary_type_version_unique",
+          "columns": [
+            {
+              "expression": "type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "dictionary_loaded_by_person_id_fk": {
+          "name": "dictionary_loaded_by_person_id_fk",
+          "tableFrom": "dictionary",
+          "tableTo": "person",
+          "columnsFrom": [
+            "loaded_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.dictionary_term": {
+      "name": "dictionary_term",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "dictionary_id": {
+          "name": "dictionary_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "term": {
+          "name": "term",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "normalized_term": {
+          "name": "normalized_term",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pt_code": {
+          "name": "pt_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pt_term": {
+          "name": "pt_term",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hlt_code": {
+          "name": "hlt_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hlt_term": {
+          "name": "hlt_term",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hlgt_code": {
+          "name": "hlgt_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hlgt_term": {
+          "name": "hlgt_term",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "soc_code": {
+          "name": "soc_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "soc_term": {
+          "name": "soc_term",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_current": {
+          "name": "is_current",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        }
+      },
+      "indexes": {
+        "dictionary_term_code_unique": {
+          "name": "dictionary_term_code_unique",
+          "columns": [
+            {
+              "expression": "dictionary_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "dictionary_term_exact_idx": {
+          "name": "dictionary_term_exact_idx",
+          "columns": [
+            {
+              "expression": "dictionary_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "normalized_term",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "dictionary_term_pt_idx": {
+          "name": "dictionary_term_pt_idx",
+          "columns": [
+            {
+              "expression": "dictionary_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "pt_code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "dictionary_term_dictionary_id_dictionary_id_fk": {
+          "name": "dictionary_term_dictionary_id_dictionary_id_fk",
+          "tableFrom": "dictionary_term",
+          "tableTo": "dictionary",
+          "columnsFrom": [
+            "dictionary_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.expected_submission": {
+      "name": "expected_submission",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "reporting_rule_id": {
+          "name": "reporting_rule_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_version_id": {
+          "name": "case_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "obligation_kind": {
+          "name": "obligation_kind",
+          "type": "obligation_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "clock_start_date": {
+          "name": "clock_start_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "due_date": {
+          "name": "due_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "expected_submission_rule_version_unique": {
+          "name": "expected_submission_rule_version_unique",
+          "columns": [
+            {
+              "expression": "reporting_rule_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "case_version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "expected_submission_case_idx": {
+          "name": "expected_submission_case_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "expected_submission_due_idx": {
+          "name": "expected_submission_due_idx",
+          "columns": [
+            {
+              "expression": "due_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "expected_submission_reporting_rule_id_reporting_rule_id_fk": {
+          "name": "expected_submission_reporting_rule_id_reporting_rule_id_fk",
+          "tableFrom": "expected_submission",
+          "tableTo": "reporting_rule",
+          "columnsFrom": [
+            "reporting_rule_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "expected_submission_case_id_case_id_fk": {
+          "name": "expected_submission_case_id_case_id_fk",
+          "tableFrom": "expected_submission",
+          "tableTo": "case",
+          "columnsFrom": [
+            "case_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "expected_submission_case_version_id_case_version_id_fk": {
+          "name": "expected_submission_case_version_id_case_version_id_fk",
+          "tableFrom": "expected_submission",
+          "tableTo": "case_version",
+          "columnsFrom": [
+            "case_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.expected_submission_waiver": {
+      "name": "expected_submission_waiver",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "expected_submission_id": {
+          "name": "expected_submission_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "waived_by": {
+          "name": "waived_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "waived_at": {
+          "name": "waived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "revoked_by": {
+          "name": "revoked_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoke_reason": {
+          "name": "revoke_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "expected_submission_waiver_idx": {
+          "name": "expected_submission_waiver_idx",
+          "columns": [
+            {
+              "expression": "expected_submission_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "expected_submission_waiver_expected_submission_id_expected_submission_id_fk": {
+          "name": "expected_submission_waiver_expected_submission_id_expected_submission_id_fk",
+          "tableFrom": "expected_submission_waiver",
+          "tableTo": "expected_submission",
+          "columnsFrom": [
+            "expected_submission_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "expected_submission_waiver_waived_by_person_id_fk": {
+          "name": "expected_submission_waiver_waived_by_person_id_fk",
+          "tableFrom": "expected_submission_waiver",
+          "tableTo": "person",
+          "columnsFrom": [
+            "waived_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "expected_submission_waiver_revoked_by_person_id_fk": {
+          "name": "expected_submission_waiver_revoked_by_person_id_fk",
+          "tableFrom": "expected_submission_waiver",
+          "tableTo": "person",
+          "columnsFrom": [
+            "revoked_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.organization": {
+      "name": "organization",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "org_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.person": {
+      "name": "person",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "given_name": {
+          "name": "given_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "family_name": {
+          "name": "family_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credentials": {
+          "name": "credentials",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "person_email_unique": {
+          "name": "person_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.product": {
+      "name": "product",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "sponsor_org_id": {
+          "name": "sponsor_org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "substance": {
+          "name": "substance",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "product_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'investigational'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "product_sponsor_org_id_organization_id_fk": {
+          "name": "product_sponsor_org_id_organization_id_fk",
+          "tableFrom": "product",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "sponsor_org_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.product_rsi_version": {
+      "name": "product_rsi_version",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effective_from": {
+          "name": "effective_from",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effective_to": {
+          "name": "effective_to",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "document_sha256": {
+          "name": "document_sha256",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approved_by": {
+          "name": "approved_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "product_rsi_version_product_idx": {
+          "name": "product_rsi_version_product_idx",
+          "columns": [
+            {
+              "expression": "product_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "effective_from",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "product_rsi_version_product_id_product_id_fk": {
+          "name": "product_rsi_version_product_id_product_id_fk",
+          "tableFrom": "product_rsi_version",
+          "tableTo": "product",
+          "columnsFrom": [
+            "product_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "product_rsi_version_approved_by_person_id_fk": {
+          "name": "product_rsi_version_approved_by_person_id_fk",
+          "tableFrom": "product_rsi_version",
+          "tableTo": "person",
+          "columnsFrom": [
+            "approved_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.case": {
+      "name": "case",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "worldwide_unique_id": {
+          "name": "worldwide_unique_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sender_case_id": {
+          "name": "sender_case_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "report_type": {
+          "name": "report_type",
+          "type": "report_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'study'"
+        },
+        "study_id": {
+          "name": "study_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "first_received_date": {
+          "name": "first_received_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "received_via": {
+          "name": "received_via",
+          "type": "receipt_channel",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "received_ref": {
+          "name": "received_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_system": {
+          "name": "source_system",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_ref": {
+          "name": "source_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "intake_payload": {
+          "name": "intake_payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "intake_payload_sha256": {
+          "name": "intake_payload_sha256",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "replaces_case_id": {
+          "name": "replaces_case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "case_study_idx": {
+          "name": "case_study_idx",
+          "columns": [
+            {
+              "expression": "study_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "case_product_idx": {
+          "name": "case_product_idx",
+          "columns": [
+            {
+              "expression": "product_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "case_replaces_idx": {
+          "name": "case_replaces_idx",
+          "columns": [
+            {
+              "expression": "replaces_case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "case_study_id_study_id_fk": {
+          "name": "case_study_id_study_id_fk",
+          "tableFrom": "case",
+          "tableTo": "study",
+          "columnsFrom": [
+            "study_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_product_id_product_id_fk": {
+          "name": "case_product_id_product_id_fk",
+          "tableFrom": "case",
+          "tableTo": "product",
+          "columnsFrom": [
+            "product_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "case_created_by_person_id_fk": {
+          "name": "case_created_by_person_id_fk",
+          "tableFrom": "case",
+          "tableTo": "person",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "case_worldwide_unique_id_unique": {
+          "name": "case_worldwide_unique_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "worldwide_unique_id"
+          ]
+        },
+        "case_sender_case_id_unique": {
+          "name": "case_sender_case_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "sender_case_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.reporting_destination": {
+      "name": "reporting_destination",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "sponsor_org_id": {
+          "name": "sponsor_org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "destination_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "country": {
+          "name": "country",
+          "type": "char(2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "e2b_receiver_id": {
+          "name": "e2b_receiver_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "default_format": {
+          "name": "default_format",
+          "type": "submission_format",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'cioms_i_pdf'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "reporting_destination_sponsor_org_id_organization_id_fk": {
+          "name": "reporting_destination_sponsor_org_id_organization_id_fk",
+          "tableFrom": "reporting_destination",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "sponsor_org_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.reporting_rule": {
+      "name": "reporting_rule",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "sponsor_org_id": {
+          "name": "sponsor_org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "study_id": {
+          "name": "study_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "destination_id": {
+          "name": "destination_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "citation": {
+          "name": "citation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "report_types": {
+          "name": "report_types",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version_kinds": {
+          "name": "version_kinds",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "obligation_kind": {
+          "name": "obligation_kind",
+          "type": "obligation_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'initial'"
+        },
+        "serious": {
+          "name": "serious",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "unexpected": {
+          "name": "unexpected",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "related": {
+          "name": "related",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fatal_or_life_threatening": {
+          "name": "fatal_or_life_threatening",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "causality_basis": {
+          "name": "causality_basis",
+          "type": "causality_basis",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'either'"
+        },
+        "excludes_anticipated": {
+          "name": "excludes_anticipated",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "requires_prior_submission": {
+          "name": "requires_prior_submission",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "timeline_days": {
+          "name": "timeline_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "due_soon_days": {
+          "name": "due_soon_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 3
+        },
+        "satisfying_kinds": {
+          "name": "satisfying_kinds",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effective_from": {
+          "name": "effective_from",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effective_to": {
+          "name": "effective_to",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "reporting_rule_destination_idx": {
+          "name": "reporting_rule_destination_idx",
+          "columns": [
+            {
+              "expression": "destination_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "reporting_rule_sponsor_org_id_organization_id_fk": {
+          "name": "reporting_rule_sponsor_org_id_organization_id_fk",
+          "tableFrom": "reporting_rule",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "sponsor_org_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "reporting_rule_study_id_study_id_fk": {
+          "name": "reporting_rule_study_id_study_id_fk",
+          "tableFrom": "reporting_rule",
+          "tableTo": "study",
+          "columnsFrom": [
+            "study_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "reporting_rule_product_id_product_id_fk": {
+          "name": "reporting_rule_product_id_product_id_fk",
+          "tableFrom": "reporting_rule",
+          "tableTo": "product",
+          "columnsFrom": [
+            "product_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "reporting_rule_destination_id_reporting_destination_id_fk": {
+          "name": "reporting_rule_destination_id_reporting_destination_id_fk",
+          "tableFrom": "reporting_rule",
+          "tableTo": "reporting_destination",
+          "columnsFrom": [
+            "destination_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.rsi_listed_term": {
+      "name": "rsi_listed_term",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "rsi_version_id": {
+          "name": "rsi_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dictionary_id": {
+          "name": "dictionary_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pt_code": {
+          "name": "pt_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pt_term": {
+          "name": "pt_term",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "listedness_note": {
+          "name": "listedness_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "rsi_listed_term_unique": {
+          "name": "rsi_listed_term_unique",
+          "columns": [
+            {
+              "expression": "rsi_version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "pt_code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "rsi_listed_term_rsi_version_id_product_rsi_version_id_fk": {
+          "name": "rsi_listed_term_rsi_version_id_product_rsi_version_id_fk",
+          "tableFrom": "rsi_listed_term",
+          "tableTo": "product_rsi_version",
+          "columnsFrom": [
+            "rsi_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "rsi_listed_term_dictionary_id_dictionary_id_fk": {
+          "name": "rsi_listed_term_dictionary_id_dictionary_id_fk",
+          "tableFrom": "rsi_listed_term",
+          "tableTo": "dictionary",
+          "columnsFrom": [
+            "dictionary_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.signature": {
+      "name": "signature",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "case_version_id": {
+          "name": "case_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "signer_person_id": {
+          "name": "signer_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "meaning": {
+          "name": "meaning",
+          "type": "signature_meaning",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "signed_sha256": {
+          "name": "signed_sha256",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "signed_at": {
+          "name": "signed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "reauth_method": {
+          "name": "reauth_method",
+          "type": "reauth_method",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reauth_at": {
+          "name": "reauth_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "signature_version_idx": {
+          "name": "signature_version_idx",
+          "columns": [
+            {
+              "expression": "case_version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "signature_case_version_id_case_version_id_fk": {
+          "name": "signature_case_version_id_case_version_id_fk",
+          "tableFrom": "signature",
+          "tableTo": "case_version",
+          "columnsFrom": [
+            "case_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "signature_signer_person_id_person_id_fk": {
+          "name": "signature_signer_person_id_person_id_fk",
+          "tableFrom": "signature",
+          "tableTo": "person",
+          "columnsFrom": [
+            "signer_person_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.site": {
+      "name": "site",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "city": {
+          "name": "city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "country": {
+          "name": "country",
+          "type": "char(2)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "site_organization_id_organization_id_fk": {
+          "name": "site_organization_id_organization_id_fk",
+          "tableFrom": "site",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.study": {
+      "name": "study",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "protocol_number": {
+          "name": "protocol_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phase": {
+          "name": "phase",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "study_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'planning'"
+        },
+        "sponsor_org_id": {
+          "name": "sponsor_org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ind_number": {
+          "name": "ind_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "eu_ct_number": {
+          "name": "eu_ct_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_blinded": {
+          "name": "is_blinded",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "study_type": {
+          "name": "study_type",
+          "type": "study_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'clinical_trial'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "study_sponsor_org_id_organization_id_fk": {
+          "name": "study_sponsor_org_id_organization_id_fk",
+          "tableFrom": "study",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "sponsor_org_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "study_protocol_number_unique": {
+          "name": "study_protocol_number_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "protocol_number"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.study_anticipated_event": {
+      "name": "study_anticipated_event",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "study_id": {
+          "name": "study_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "prespecified": {
+          "name": "prespecified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "plan_reference": {
+          "name": "plan_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "justification": {
+          "name": "justification",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "predicted_rate": {
+          "name": "predicted_rate",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rate_unit": {
+          "name": "rate_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rate_basis": {
+          "name": "rate_basis",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "effective_from": {
+          "name": "effective_from",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effective_to": {
+          "name": "effective_to",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approved_by": {
+          "name": "approved_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "study_anticipated_event_study_idx": {
+          "name": "study_anticipated_event_study_idx",
+          "columns": [
+            {
+              "expression": "study_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "effective_from",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "study_anticipated_event_study_id_study_id_fk": {
+          "name": "study_anticipated_event_study_id_study_id_fk",
+          "tableFrom": "study_anticipated_event",
+          "tableTo": "study",
+          "columnsFrom": [
+            "study_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "study_anticipated_event_approved_by_person_id_fk": {
+          "name": "study_anticipated_event_approved_by_person_id_fk",
+          "tableFrom": "study_anticipated_event",
+          "tableTo": "person",
+          "columnsFrom": [
+            "approved_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.study_anticipated_event_term": {
+      "name": "study_anticipated_event_term",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "anticipated_event_id": {
+          "name": "anticipated_event_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dictionary_id": {
+          "name": "dictionary_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pt_code": {
+          "name": "pt_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pt_term": {
+          "name": "pt_term",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "study_anticipated_event_term_unique": {
+          "name": "study_anticipated_event_term_unique",
+          "columns": [
+            {
+              "expression": "anticipated_event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "pt_code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "study_anticipated_event_term_anticipated_event_id_study_anticipated_event_id_fk": {
+          "name": "study_anticipated_event_term_anticipated_event_id_study_anticipated_event_id_fk",
+          "tableFrom": "study_anticipated_event_term",
+          "tableTo": "study_anticipated_event",
+          "columnsFrom": [
+            "anticipated_event_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "study_anticipated_event_term_dictionary_id_dictionary_id_fk": {
+          "name": "study_anticipated_event_term_dictionary_id_dictionary_id_fk",
+          "tableFrom": "study_anticipated_event_term",
+          "tableTo": "dictionary",
+          "columnsFrom": [
+            "dictionary_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.study_product": {
+      "name": "study_product",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "study_id": {
+          "name": "study_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "product_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'imp'"
+        }
+      },
+      "indexes": {
+        "study_product_pair_idx": {
+          "name": "study_product_pair_idx",
+          "columns": [
+            {
+              "expression": "study_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "product_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "study_product_study_id_study_id_fk": {
+          "name": "study_product_study_id_study_id_fk",
+          "tableFrom": "study_product",
+          "tableTo": "study",
+          "columnsFrom": [
+            "study_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "study_product_product_id_product_id_fk": {
+          "name": "study_product_product_id_product_id_fk",
+          "tableFrom": "study_product",
+          "tableTo": "product",
+          "columnsFrom": [
+            "product_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.study_site": {
+      "name": "study_site",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "study_id": {
+          "name": "study_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "site_id": {
+          "name": "site_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "site_number": {
+          "name": "site_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "study_site_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        }
+      },
+      "indexes": {
+        "study_site_pair_idx": {
+          "name": "study_site_pair_idx",
+          "columns": [
+            {
+              "expression": "study_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "site_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "study_site_number_idx": {
+          "name": "study_site_number_idx",
+          "columns": [
+            {
+              "expression": "study_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "site_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "study_site_study_id_study_id_fk": {
+          "name": "study_site_study_id_study_id_fk",
+          "tableFrom": "study_site",
+          "tableTo": "study",
+          "columnsFrom": [
+            "study_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "study_site_site_id_site_id_fk": {
+          "name": "study_site_site_id_site_id_fk",
+          "tableFrom": "study_site",
+          "tableTo": "site",
+          "columnsFrom": [
+            "site_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.submission": {
+      "name": "submission",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "case_version_id": {
+          "name": "case_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "destination_id": {
+          "name": "destination_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "submission_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "format": {
+          "name": "format",
+          "type": "submission_format",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sent_at": {
+          "name": "sent_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "sent_by": {
+          "name": "sent_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload_sha256": {
+          "name": "payload_sha256",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "case_version_sha256": {
+          "name": "case_version_sha256",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "message_id": {
+          "name": "message_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "transmission_ref": {
+          "name": "transmission_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "submission_version_idx": {
+          "name": "submission_version_idx",
+          "columns": [
+            {
+              "expression": "case_version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "submission_destination_idx": {
+          "name": "submission_destination_idx",
+          "columns": [
+            {
+              "expression": "destination_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "sent_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "submission_case_version_id_case_version_id_fk": {
+          "name": "submission_case_version_id_case_version_id_fk",
+          "tableFrom": "submission",
+          "tableTo": "case_version",
+          "columnsFrom": [
+            "case_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "submission_destination_id_reporting_destination_id_fk": {
+          "name": "submission_destination_id_reporting_destination_id_fk",
+          "tableFrom": "submission",
+          "tableTo": "reporting_destination",
+          "columnsFrom": [
+            "destination_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "submission_sent_by_person_id_fk": {
+          "name": "submission_sent_by_person_id_fk",
+          "tableFrom": "submission",
+          "tableTo": "person",
+          "columnsFrom": [
+            "sent_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.submission_acknowledgement": {
+      "name": "submission_acknowledgement",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "submission_id": {
+          "name": "submission_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "received_at": {
+          "name": "received_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ack_code": {
+          "name": "ack_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ack_message_id": {
+          "name": "ack_message_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_text": {
+          "name": "error_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recorded_by": {
+          "name": "recorded_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "submission_ack_submission_idx": {
+          "name": "submission_ack_submission_idx",
+          "columns": [
+            {
+              "expression": "submission_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "submission_acknowledgement_submission_id_submission_id_fk": {
+          "name": "submission_acknowledgement_submission_id_submission_id_fk",
+          "tableFrom": "submission_acknowledgement",
+          "tableTo": "submission",
+          "columnsFrom": [
+            "submission_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "submission_acknowledgement_recorded_by_person_id_fk": {
+          "name": "submission_acknowledgement_recorded_by_person_id_fk",
+          "tableFrom": "submission_acknowledgement",
+          "tableTo": "person",
+          "columnsFrom": [
+            "recorded_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.access_role": {
+      "name": "access_role",
+      "schema": "public",
+      "values": [
+        "admin",
+        "case_processor",
+        "medical_reviewer",
+        "read_only",
+        "ingest"
+      ]
+    },
+    "public.action_taken": {
+      "name": "action_taken",
+      "schema": "public",
+      "values": [
+        "drug_withdrawn",
+        "dose_reduced",
+        "dose_increased",
+        "dose_not_changed",
+        "unknown",
+        "not_applicable"
+      ]
+    },
+    "public.age_group": {
+      "name": "age_group",
+      "schema": "public",
+      "values": [
+        "foetus",
+        "neonate",
+        "infant",
+        "child",
+        "adolescent",
+        "adult",
+        "elderly"
+      ]
+    },
+    "public.age_unit": {
+      "name": "age_unit",
+      "schema": "public",
+      "values": [
+        "years",
+        "months",
+        "weeks",
+        "days",
+        "hours"
+      ]
+    },
+    "public.assessor_kind": {
+      "name": "assessor_kind",
+      "schema": "public",
+      "values": [
+        "reporter",
+        "sponsor"
+      ]
+    },
+    "public.attachment_kind": {
+      "name": "attachment_kind",
+      "schema": "public",
+      "values": [
+        "source_document",
+        "correspondence",
+        "submission_payload"
+      ]
+    },
+    "public.causality_basis": {
+      "name": "causality_basis",
+      "schema": "public",
+      "values": [
+        "either",
+        "sponsor",
+        "reporter"
+      ]
+    },
+    "public.destination_kind": {
+      "name": "destination_kind",
+      "schema": "public",
+      "values": [
+        "regulator",
+        "ethics_committee",
+        "investigator_group",
+        "partner"
+      ]
+    },
+    "public.dictionary_type": {
+      "name": "dictionary_type",
+      "schema": "public",
+      "values": [
+        "MedDRA",
+        "WHODrug"
+      ]
+    },
+    "public.drug_role": {
+      "name": "drug_role",
+      "schema": "public",
+      "values": [
+        "suspect",
+        "concomitant",
+        "interacting",
+        "not_administered"
+      ]
+    },
+    "public.event_outcome": {
+      "name": "event_outcome",
+      "schema": "public",
+      "values": [
+        "recovered",
+        "recovering",
+        "not_recovered",
+        "recovered_with_sequelae",
+        "fatal",
+        "unknown"
+      ]
+    },
+    "public.expectedness": {
+      "name": "expectedness",
+      "schema": "public",
+      "values": [
+        "expected",
+        "unexpected"
+      ]
+    },
+    "public.obligation_kind": {
+      "name": "obligation_kind",
+      "schema": "public",
+      "values": [
+        "initial",
+        "follow_up",
+        "nullification"
+      ]
+    },
+    "public.org_kind": {
+      "name": "org_kind",
+      "schema": "public",
+      "values": [
+        "sponsor",
+        "cro",
+        "site_org"
+      ]
+    },
+    "public.product_kind": {
+      "name": "product_kind",
+      "schema": "public",
+      "values": [
+        "investigational",
+        "marketed"
+      ]
+    },
+    "public.product_role": {
+      "name": "product_role",
+      "schema": "public",
+      "values": [
+        "imp",
+        "comparator",
+        "placebo",
+        "background"
+      ]
+    },
+    "public.reauth_method": {
+      "name": "reauth_method",
+      "schema": "public",
+      "values": [
+        "oidc_fresh_token",
+        "dev_token",
+        "seed_fixture"
+      ]
+    },
+    "public.receipt_channel": {
+      "name": "receipt_channel",
+      "schema": "public",
+      "values": [
+        "email",
+        "fax",
+        "phone",
+        "edc_push",
+        "other"
+      ]
+    },
+    "public.rechallenge": {
+      "name": "rechallenge",
+      "schema": "public",
+      "values": [
+        "recurred",
+        "did_not_recur",
+        "outcome_unknown",
+        "not_rechallenged"
+      ]
+    },
+    "public.report_type": {
+      "name": "report_type",
+      "schema": "public",
+      "values": [
+        "spontaneous",
+        "study",
+        "other",
+        "unknown"
+      ]
+    },
+    "public.reporter_qualification": {
+      "name": "reporter_qualification",
+      "schema": "public",
+      "values": [
+        "physician",
+        "pharmacist",
+        "other_health_professional",
+        "lawyer",
+        "consumer"
+      ]
+    },
+    "public.sex": {
+      "name": "sex",
+      "schema": "public",
+      "values": [
+        "male",
+        "female",
+        "unknown"
+      ]
+    },
+    "public.signature_meaning": {
+      "name": "signature_meaning",
+      "schema": "public",
+      "values": [
+        "medical_review",
+        "approval"
+      ]
+    },
+    "public.study_site_status": {
+      "name": "study_site_status",
+      "schema": "public",
+      "values": [
+        "pending",
+        "active",
+        "closed"
+      ]
+    },
+    "public.study_status": {
+      "name": "study_status",
+      "schema": "public",
+      "values": [
+        "planning",
+        "active",
+        "closed"
+      ]
+    },
+    "public.study_type": {
+      "name": "study_type",
+      "schema": "public",
+      "values": [
+        "clinical_trial",
+        "individual_patient_use",
+        "other_study"
+      ]
+    },
+    "public.submission_format": {
+      "name": "submission_format",
+      "schema": "public",
+      "values": [
+        "cioms_i_pdf",
+        "medwatch_3500a_pdf",
+        "e2b_r3_json",
+        "portal_manual",
+        "email"
+      ]
+    },
+    "public.submission_kind": {
+      "name": "submission_kind",
+      "schema": "public",
+      "values": [
+        "initial_notification",
+        "initial_report",
+        "follow_up_report",
+        "amendment",
+        "nullification",
+        "notification_letter"
+      ]
+    },
+    "public.version_kind": {
+      "name": "version_kind",
+      "schema": "public",
+      "values": [
+        "initial",
+        "follow_up",
+        "amendment"
+      ]
+    },
+    "public.workflow_state": {
+      "name": "workflow_state",
+      "schema": "public",
+      "values": [
+        "data_entry",
+        "medical_review",
+        "closed"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

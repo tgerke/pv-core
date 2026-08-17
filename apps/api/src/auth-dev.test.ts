@@ -143,6 +143,73 @@ describe("authorization by grant scope (§11.10(g), ADR-0015)", () => {
       ).status,
     ).toBe(403);
   });
+
+  it("the anticipated designation is the sponsor's judgment: processors and the intake service get 403, the reviewer 200; only an admin edits the study's list", async () => {
+    const created = (await (
+      await app.request("/cases", {
+        method: "POST",
+        headers: PROCESSOR,
+        body: JSON.stringify({
+          study_id: fx.studyId,
+          product_id: fx.productId,
+          first_received_date: fx.today,
+          received_via: "fax",
+          received_ref: "FX-2026-0042",
+          events: [{ seq: 1, reported_term: "Back pain", llt_code: await fx.llt("Back pain") }],
+        }),
+      })
+    ).json()) as { case_id: string; case_version_id: string };
+    const detail = (await (
+      await app.request(`/cases/${created.case_id}`, { headers: ADMIN })
+    ).json()) as { received_via: string; received_ref: string };
+    expect(detail.received_via).toBe("fax");
+    expect(detail.received_ref).toBe("FX-2026-0042");
+    const body = JSON.stringify({ designations: [{ event_seq: 1, anticipated: false }] });
+    for (const headers of [PROCESSOR, INGEST, READONLY]) {
+      expect(
+        (
+          await app.request(`/case-versions/${created.case_version_id}/designations`, {
+            method: "PUT",
+            headers,
+            body,
+          })
+        ).status,
+      ).toBe(403);
+    }
+    expect(
+      (
+        await app.request(`/case-versions/${created.case_version_id}/designations`, {
+          method: "PUT",
+          headers: REVIEWER,
+          body,
+        })
+      ).status,
+    ).toBe(200);
+    const concept = {
+      study_id: fx.studyId,
+      label: "API gate test concept",
+      plan_reference: "SSP §0",
+      effective_from: fx.today,
+      dictionary_id: fx.dictionaryId,
+      terms: [{ pt_code: "x", pt_term: "Back pain" }],
+    };
+    for (const headers of [PROCESSOR, REVIEWER]) {
+      expect(
+        (
+          await app.request("/anticipated-events", {
+            method: "POST",
+            headers,
+            body: JSON.stringify(concept),
+          })
+        ).status,
+      ).toBe(403);
+    }
+    expect((await app.request("/anticipated-events", { headers: READONLY })).status).toBe(200);
+    expect(
+      (await app.request(`/studies/${fx.studyId}/anticipated-events`, { headers: REVIEWER }))
+        .status,
+    ).toBe(200);
+  });
 });
 
 describe("signing re-authentication (§11.200)", () => {

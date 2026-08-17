@@ -3,6 +3,7 @@ import {
   caseAssessment,
   caseDrug,
   caseEvent,
+  caseEventDesignation,
   caseNarrative,
   caseNullification,
   casePatient,
@@ -60,6 +61,7 @@ export type VersionKind = "initial" | "follow_up" | "amendment";
 export type WorkflowState = "data_entry" | "medical_review" | "closed";
 export type SignatureMeaning = "medical_review" | "approval";
 export type ReauthMethod = "oidc_fresh_token" | "dev_token" | "seed_fixture";
+export type ReceiptChannel = "email" | "fax" | "phone" | "edc_push" | "other";
 
 export interface PatientInput {
   initials?: string | null;
@@ -153,6 +155,19 @@ export interface NarrativeInput {
   senderComments?: string | null;
 }
 
+/**
+ * The sponsor's designation of an event as anticipated in the study population
+ * (FDA IND safety reporting guidance, December 2025, §V.A / §VI.A). Anticipated
+ * designations name a concept on the study's list; a "not anticipated"
+ * designation records that the question was considered.
+ */
+export interface DesignationInput {
+  eventSeq: number;
+  anticipated: boolean;
+  anticipatedEventId?: string | null;
+  rationale?: string | null;
+}
+
 export interface CaseSections {
   patient?: PatientInput;
   sources?: SourceInput[];
@@ -161,6 +176,8 @@ export interface CaseSections {
   assessments?: AssessmentInput[];
   tests?: TestInput[];
   narrative?: NarrativeInput;
+  /** Sponsor-only (the API gates it with `assess`); replace semantics. */
+  designations?: DesignationInput[];
 }
 
 export interface CreateCaseInput extends CaseSections {
@@ -175,6 +192,9 @@ export interface CreateCaseInput extends CaseSections {
   senderCaseId?: string;
   worldwideUniqueId?: string;
   replacesCaseId?: string | null;
+  /** How the report reached the safety database and the reference it carried. */
+  receivedVia?: ReceiptChannel | null;
+  receivedRef?: string | null;
   source?: { system: string; ref: string; payload?: unknown } | null;
   createdBy: string;
 }
@@ -325,6 +345,7 @@ async function writeEvents(tx: Tx, versionId: string, dictionaryId: string, rows
   const keep = new Set(rows.map((r) => r.seq));
   for (const e of existing.filter((e) => !keep.has(e.seq))) {
     await tx.delete(caseAssessment).where(eq(caseAssessment.caseEventId, e.id));
+    await tx.delete(caseEventDesignation).where(eq(caseEventDesignation.caseEventId, e.id));
     await tx.delete(caseEvent).where(eq(caseEvent.id, e.id));
   }
   for (const r of rows) {
@@ -439,6 +460,62 @@ async function writeAssessments(tx: Tx, versionId: string, rows: AssessmentInput
   );
 }
 
+/**
+ * Replace the version's designations. An anticipated designation must name a
+ * concept on the case's study list that is in effect on the version's
+ * awareness date; the DB guard checks the study, this checks the window so a
+ * later clone never fails on a concept that has since ended.
+ */
+async function writeDesignations(tx: Tx, versionId: string, rows: DesignationInput[]) {
+  await tx.delete(caseEventDesignation).where(eq(caseEventDesignation.caseVersionId, versionId));
+  if (rows.length === 0) return;
+  const events = await tx
+    .select({ id: caseEvent.id, seq: caseEvent.seq })
+    .from(caseEvent)
+    .where(eq(caseEvent.caseVersionId, versionId));
+  const values = [];
+  for (const r of rows) {
+    const e = events.find((x) => x.seq === r.eventSeq);
+    if (!e)
+      throw new CoreError(
+        "invalid",
+        `designation references event seq ${r.eventSeq}, which does not exist`,
+      );
+    if (r.anticipated) {
+      if (!r.anticipatedEventId)
+        throw new CoreError(
+          "invalid",
+          `designation for event seq ${r.eventSeq}: an anticipated designation names a concept on the study's list`,
+        );
+      const [ok] = await tx.execute(sql`
+        SELECT 1 FROM study_anticipated_event ae
+        JOIN case_version cv ON cv.id = ${versionId}
+        JOIN "case" c ON c.id = cv.case_id AND c.study_id = ae.study_id
+        WHERE ae.id = ${r.anticipatedEventId}
+          AND ae.effective_from <= cv.awareness_date
+          AND (ae.effective_to IS NULL OR ae.effective_to >= cv.awareness_date)`);
+      if (!ok)
+        throw new CoreError(
+          "invalid",
+          `designation for event seq ${r.eventSeq}: the concept is not on this study's anticipated-event list in effect on the awareness date`,
+        );
+    } else if (r.anticipatedEventId) {
+      throw new CoreError(
+        "invalid",
+        `designation for event seq ${r.eventSeq}: a "not anticipated" designation names no concept`,
+      );
+    }
+    values.push({
+      caseVersionId: versionId,
+      caseEventId: e.id,
+      anticipated: r.anticipated,
+      anticipatedEventId: r.anticipated ? (r.anticipatedEventId ?? null) : null,
+      rationale: r.rationale ?? null,
+    });
+  }
+  await tx.insert(caseEventDesignation).values(values);
+}
+
 async function writeTests(tx: Tx, versionId: string, rows: TestInput[]) {
   await tx.delete(caseTest).where(eq(caseTest.caseVersionId, versionId));
   if (rows.length === 0) return;
@@ -484,6 +561,7 @@ async function writeSections(
   if (sections.events) await writeEvents(tx, versionId, dictionaryId, sections.events);
   if (sections.drugs) await writeDrugs(tx, versionId, sections.drugs);
   if (sections.assessments) await writeAssessments(tx, versionId, sections.assessments);
+  if (sections.designations) await writeDesignations(tx, versionId, sections.designations);
   if (sections.tests) await writeTests(tx, versionId, sections.tests);
   if (sections.narrative) await writeNarrative(tx, versionId, sections.narrative);
 }
@@ -551,6 +629,8 @@ export async function createCase(
           studyId: input.studyId ?? null,
           productId: input.productId,
           firstReceivedDate: input.firstReceivedDate,
+          receivedVia: input.receivedVia ?? null,
+          receivedRef: input.receivedRef ?? null,
           sourceSystem: input.source?.system ?? null,
           sourceRef: input.source?.ref ?? null,
           intakePayload: input.source?.payload ?? null,
@@ -676,6 +756,13 @@ export async function openVersion(
         JOIN case_drug nd ON nd.case_version_id = ${newId} AND nd.seq = od.seq
         JOIN case_event ne ON ne.case_version_id = ${newId} AND ne.seq = oe.seq
         WHERE a.case_version_id = ${from}`);
+      await tx.execute(sql`
+        INSERT INTO case_event_designation (case_version_id, case_event_id, anticipated, anticipated_event_id, rationale)
+        SELECT ${newId}, ne.id, g.anticipated, g.anticipated_event_id, g.rationale
+        FROM case_event_designation g
+        JOIN case_event oe ON oe.id = g.case_event_id
+        JOIN case_event ne ON ne.case_version_id = ${newId} AND ne.seq = oe.seq
+        WHERE g.case_version_id = ${from}`);
       await tx.execute(sql`
         INSERT INTO case_test (case_version_id, seq, test_date, test_name, result_text, unit, comments)
         SELECT ${newId}, seq, test_date, test_name, result_text, unit, comments FROM case_test WHERE case_version_id = ${from}`);

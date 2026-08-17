@@ -25,6 +25,10 @@ export interface DigestCaseRow {
   awareness_date: string;
   first_received_date: string;
   causality_assessed: boolean;
+  any_causality_disagreement: boolean;
+  any_anticipated: boolean;
+  open_obligations: number;
+  anticipated_labels: string | null;
 }
 
 export interface DigestData {
@@ -35,6 +39,14 @@ export interface DigestData {
   intake: DigestCaseRow[];
   awaitingReview: DigestCaseRow[];
   unassessed: DigestCaseRow[];
+  /** Investigator and sponsor recorded opposite causality opinions. */
+  disagreement: DigestCaseRow[];
+  /**
+   * The sponsor designated a serious event anticipated in the study population;
+   * held from individual IND safety reporting for aggregate review. Informational:
+   * listed so nothing is held silently, not counted as an action item.
+   */
+  anticipated: DigestCaseRow[];
   counts: {
     cases: number;
     open_obligations: number;
@@ -64,6 +76,9 @@ export async function collectDigest(sql: Sql, studyId: string): Promise<DigestDa
   const cases = (await sql`
     SELECT q.sender_case_id, q.state, q.expedited_class, q.reportability_reason,
       q.awareness_date::text AS awareness_date, q.first_received_date::text AS first_received_date, q.causality_assessed,
+      q.any_causality_disagreement, q.any_anticipated, q.open_obligations::int AS open_obligations,
+      (SELECT string_agg(DISTINCT er.anticipated_label, '; ') FROM v_case_event_reportability er
+         WHERE er.case_version_id = q.latest_version_id AND er.anticipated) AS anticipated_labels,
       (SELECT max(t.transitioned_at)::date FROM case_transition t WHERE t.case_version_id = q.latest_version_id AND t.to_state = 'medical_review') AS review_since
     FROM v_case_queue q WHERE q.study_id = ${studyId}
     ORDER BY q.first_received_date`) as unknown as (DigestCaseRow & {
@@ -112,6 +127,10 @@ export async function collectDigest(sql: Sql, studyId: string): Promise<DigestDa
         c.state !== "closed" &&
         c.state !== "intake",
     ),
+    disagreement: cases.filter(
+      (c) => c.any_causality_disagreement && c.state !== "nullified" && c.state !== "closed",
+    ),
+    anticipated: cases.filter((c) => c.any_anticipated && c.state !== "nullified"),
     counts: {
       cases: counts!.cases,
       open_obligations: counts!.open_obligations,
@@ -131,6 +150,7 @@ export function attentionCount(d: DigestData): number {
     d.intake.length +
     d.awaitingReview.length +
     d.unassessed.length +
+    d.disagreement.length +
     (d.chain.valid ? 0 : 1)
   );
 }
@@ -188,11 +208,26 @@ export function renderDigest(d: DigestData): { subject: string; text: string } {
       (c) => `${c.sender_case_id}: ${c.state.replace(/_/g, " ")}, ${c.reportability_reason}`,
     ),
   );
+  section(
+    "Investigator and sponsor differ on causality (both opinions travel with the report)",
+    d.disagreement.map(
+      (c) => `${c.sender_case_id}: ${c.state.replace(/_/g, " ")}, ${c.reportability_reason}`,
+    ),
+  );
 
   if (n === 0) {
     lines.push("Nothing needs attention today.");
     lines.push("");
   }
+
+  // Not an action item: listed so a held-back report is never silent.
+  section(
+    "Anticipated serious adverse events held from individual IND safety reporting (aggregate review)",
+    d.anticipated.map(
+      (c) =>
+        `${c.sender_case_id}: ${c.anticipated_labels ?? "anticipated"}; ${c.open_obligations} other obligation${c.open_obligations === 1 ? "" : "s"} still open`,
+    ),
+  );
 
   const c = d.counts;
   lines.push(

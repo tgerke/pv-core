@@ -90,7 +90,8 @@ export type ScopeParam =
   | "destinationId"
   | "ruleId"
   | "grantId"
-  | "rsiVersionId";
+  | "rsiVersionId"
+  | "anticipatedEventId";
 
 /**
  * Resolve a path parameter to the study/sponsor it belongs to (one indexed
@@ -162,6 +163,11 @@ export async function resolveScope(
       const [r] = await sql`
         SELECT p.sponsor_org_id FROM product_rsi_version v JOIN product p ON p.id = v.product_id WHERE v.id = ${id}`;
       return r ? { sponsorOrgId: r.sponsor_org_id as string } : null;
+    }
+    case "anticipatedEventId": {
+      const [r] = await sql`
+        SELECT ae.study_id, st.sponsor_org_id FROM study_anticipated_event ae JOIN study st ON st.id = ae.study_id WHERE ae.id = ${id}`;
+      return ofStudy(r as { study_id: string; sponsor_org_id: string } | undefined);
     }
     case "destinationId": {
       const [r] = await sql`SELECT sponsor_org_id FROM reporting_destination WHERE id = ${id}`;

@@ -32,6 +32,7 @@ const IMMUTABLE = [
   "case_unblinding",
   "case_nullification",
   "rsi_listed_term",
+  "study_anticipated_event_term",
   "dictionary_term",
 ];
 const LOCKED = [
@@ -41,6 +42,7 @@ const LOCKED = [
   "case_event",
   "case_drug",
   "case_assessment",
+  "case_event_designation",
   "case_test",
   "case_narrative",
 ];

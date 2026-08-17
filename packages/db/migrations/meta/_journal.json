@@ -29,6 +29,13 @@
       "when": 1786978304845,
       "tag": "0003_sync_jit_off_and_canonical_hash_time",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786995372640,
+      "tag": "0004_anticipated_and_disagreement",
+      "breakpoints": true
     }
   ]
 }

@@ -153,6 +153,16 @@ export const attachmentKind = pgEnum("attachment_kind", [
   "submission_payload",
 ]);
 export const dictionaryType = pgEnum("dictionary_type", ["MedDRA", "WHODrug"]);
+// How a case reached the safety database: the site's SAE report by email, fax
+// or phone, a push from the EDC, or another route. Human provenance; a machine
+// push also carries source_system/source_ref and the as-received payload.
+export const receiptChannel = pgEnum("receipt_channel", [
+  "email",
+  "fax",
+  "phone",
+  "edc_push",
+  "other",
+]);
 
 // ---------------------------------------------------------------------------
 // Organizational spine
@@ -282,6 +292,58 @@ export const rsiListedTerm = pgTable(
   (t) => [uniqueIndex("rsi_listed_term_unique").on(t.rsiVersionId, t.ptCode)],
 );
 
+// A serious adverse event the sponsor anticipates in the study population
+// independent of the drug (disease course, age, background regimen), listed in
+// the safety surveillance plan and not reported to FDA as an individual IND
+// safety report; monitored in aggregate instead (FDA, Sponsor Responsibilities:
+// Safety Reporting Requirements and Safety Assessment for IND and BA/BE Studies,
+// December 2025, §III.C, §IV.A.2.a, §V.A). Distinct from expectedness, which is
+// judged against the RSI. One row is one medical concept and may span several
+// Preferred Terms (§V.A). Dated like an RSI version: effective_to is the one
+// permitted mutation. A concept added during the trial (§VI.A) is a row with
+// prespecified = false and a justification.
+export const studyAnticipatedEvent = pgTable(
+  "study_anticipated_event",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    studyId: uuid("study_id")
+      .notNull()
+      .references(() => study.id),
+    label: text("label").notNull(), // the medical concept, e.g. "Skeletal complications of bone metastases"
+    prespecified: boolean("prespecified").notNull().default(true),
+    planReference: text("plan_reference"), // e.g. "SSP v1.0 §4.2"
+    justification: text("justification"), // clinical judgment when added during the trial
+    // Predicted rate for the study population and where it came from (§V.A,
+    // §VI.C.1.b). A rate never exists without its basis (CHECK in 0004).
+    predictedRate: numeric("predicted_rate"),
+    rateUnit: text("rate_unit"), // 'per_100_participant_years' | 'proportion'
+    rateBasis: text("rate_basis"),
+    effectiveFrom: date("effective_from").notNull(),
+    effectiveTo: date("effective_to"),
+    approvedBy: uuid("approved_by").references(() => person.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("study_anticipated_event_study_idx").on(t.studyId, t.effectiveFrom)],
+);
+
+// The Preferred Terms that make up an anticipated-event concept. Immutable: a
+// change of terms is a new concept row.
+export const studyAnticipatedEventTerm = pgTable(
+  "study_anticipated_event_term",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    anticipatedEventId: uuid("anticipated_event_id")
+      .notNull()
+      .references(() => studyAnticipatedEvent.id),
+    dictionaryId: uuid("dictionary_id")
+      .notNull()
+      .references(() => dictionary.id),
+    ptCode: text("pt_code").notNull(),
+    ptTerm: text("pt_term").notNull(),
+  },
+  (t) => [uniqueIndex("study_anticipated_event_term_unique").on(t.anticipatedEventId, t.ptCode)],
+);
+
 export const person = pgTable("person", {
   id: uuid("id").primaryKey().defaultRandom(),
   givenName: text("given_name").notNull(),
@@ -407,6 +469,10 @@ export const pvCase = pgTable(
       .notNull()
       .references(() => product.id),
     firstReceivedDate: date("first_received_date").notNull(), // C.1.4
+    // How the report reached us and the reference it carried (a message id, a
+    // fax cover, a call log). Not identity: mutable, audited.
+    receivedVia: receiptChannel("received_via"),
+    receivedRef: text("received_ref"),
     // Machine intake provenance: the as-received record and its hash.
     sourceSystem: text("source_system"),
     sourceRef: text("source_ref"),
@@ -603,6 +669,33 @@ export const caseAssessment = pgTable(
   ],
 );
 
+// The sponsor's designation of an event as anticipated in the study population
+// (or explicitly not), pointing at the concept on the study's list. A separate
+// child so the reporter's event facts stay untouched and versions hashed before
+// this table existed keep their hash (the hash includes designations only when
+// present). Cloned into follow-up versions, locked with the version; who and
+// when live in the audit trail.
+export const caseEventDesignation = pgTable(
+  "case_event_designation",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    caseVersionId: uuid("case_version_id")
+      .notNull()
+      .references(() => caseVersion.id),
+    caseEventId: uuid("case_event_id")
+      .notNull()
+      .references(() => caseEvent.id),
+    anticipated: boolean("anticipated").notNull(),
+    // Required when anticipated, absent otherwise (CHECK in 0004).
+    anticipatedEventId: uuid("anticipated_event_id").references(() => studyAnticipatedEvent.id),
+    rationale: text("rationale"),
+  },
+  (t) => [
+    uniqueIndex("case_event_designation_event_unique").on(t.caseEventId),
+    index("case_event_designation_version_idx").on(t.caseVersionId),
+  ],
+);
+
 // F.r Results of tests and procedures (minimal).
 export const caseTest = pgTable(
   "case_test",
@@ -779,6 +872,10 @@ export const reportingRule = pgTable(
     related: boolean("related"),
     fatalOrLifeThreatening: boolean("fatal_or_life_threatening"),
     causalityBasis: causalityBasis("causality_basis").notNull().default("either"),
+    // When set, an event the sponsor designated anticipated in the study
+    // population does not satisfy this rule (FDA IND safety reporting; the
+    // EU/E2A rules have no such carve-out and leave it false).
+    excludesAnticipated: boolean("excludes_anticipated").notNull().default(false),
     requiresPriorSubmission: boolean("requires_prior_submission").notNull().default(false),
     timelineDays: integer("timeline_days").notNull(),
     dueSoonDays: integer("due_soon_days").notNull().default(3),

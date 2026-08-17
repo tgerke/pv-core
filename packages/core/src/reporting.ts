@@ -51,6 +51,8 @@ export interface RuleInput {
   related?: boolean | null;
   fatalOrLifeThreatening?: boolean | null;
   causalityBasis?: "either" | "sponsor" | "reporter";
+  /** An event the sponsor designated anticipated in the study population does not satisfy this rule. */
+  excludesAnticipated?: boolean;
   requiresPriorSubmission?: boolean;
   timelineDays: number;
   dueSoonDays?: number;
@@ -80,6 +82,7 @@ export async function createRule(db: Db, actor: Actor, input: RuleInput): Promis
           related: input.related ?? null,
           fatalOrLifeThreatening: input.fatalOrLifeThreatening ?? null,
           causalityBasis: input.causalityBasis ?? "either",
+          excludesAnticipated: input.excludesAnticipated ?? false,
           requiresPriorSubmission: input.requiresPriorSubmission ?? false,
           timelineDays: input.timelineDays,
           dueSoonDays: input.dueSoonDays ?? 3,

@@ -72,6 +72,11 @@ export const QueueRowSchema = loose(
     minimum_criteria_met: z.boolean(),
     is_unblinded: z.boolean(),
     is_nullified: z.boolean(),
+    // Appended in migration 0004.
+    any_anticipated: z.boolean().optional(),
+    any_causality_disagreement: z.boolean().optional(),
+    received_via: z.enum(["email", "fax", "phone", "edc_push", "other"]).nullish(),
+    received_ref: z.string().nullish(),
   },
   "QueueRow",
 );
@@ -263,11 +268,26 @@ export const CreateCaseBody = SectionsBody.extend({
   sender_case_id: z.string().optional(),
   worldwide_unique_id: z.string().optional(),
   replaces_case_id: uuid.nullish(),
+  received_via: z.enum(["email", "fax", "phone", "edc_push", "other"]).nullish(),
+  received_ref: z.string().nullish(),
   source: z
     .object({ system: z.string(), ref: z.string(), payload: z.unknown().optional() })
     .nullish(),
   assessments: z.array(AssessmentBody).optional(),
 });
+
+/**
+ * The sponsor's designation of an event as anticipated in the study population
+ * (or explicitly not). Sponsor-only: its own route, gated with `assess`; never
+ * part of SectionsBody or CreateCaseBody.
+ */
+export const DesignationBody = z.object({
+  event_seq: z.number().int().positive(),
+  anticipated: z.boolean(),
+  anticipated_event_id: uuid.nullish(),
+  rationale: z.string().nullish(),
+});
+export const DesignationsBody = z.object({ designations: z.array(DesignationBody) });
 
 export const OpenVersionBody = z.object({
   kind: z.enum(["follow_up", "amendment"]),
@@ -347,6 +367,7 @@ export const RuleBody = z.object({
   related: z.boolean().nullish(),
   fatal_or_life_threatening: z.boolean().nullish(),
   causality_basis: z.enum(["either", "sponsor", "reporter"]).optional(),
+  excludes_anticipated: z.boolean().optional(),
   requires_prior_submission: z.boolean().optional(),
   timeline_days: z.number().int().positive(),
   due_soon_days: z.number().int().nonnegative().optional(),
@@ -408,6 +429,20 @@ export const RsiVersionBody = z.object({
   ),
   document_sha256: z.string().length(64).nullish(),
   end_previous: z.boolean().optional(),
+});
+export const AnticipatedEventBody = z.object({
+  study_id: uuid,
+  label: z.string().min(1),
+  prespecified: z.boolean().optional(),
+  plan_reference: z.string().nullish(),
+  justification: z.string().nullish(),
+  predicted_rate: z.number().nonnegative().nullish(),
+  rate_unit: z.enum(["per_100_participant_years", "proportion"]).nullish(),
+  rate_basis: z.string().nullish(),
+  effective_from: dateStr,
+  approved_by: uuid.nullish(),
+  dictionary_id: uuid,
+  terms: z.array(z.object({ pt_code: z.string(), pt_term: z.string() })).min(1),
 });
 export const DestinationBody = z.object({
   sponsor_org_id: uuid.nullish(),

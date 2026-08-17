@@ -1,11 +1,14 @@
 // Dev seed: a CRO instance hosting two sponsors. The main sponsor runs two
 // fictional prostate-cancer trials (a blinded Phase 2 with a German site, so
 // the EU-CTR SUSAR rules have somewhere to apply, and an open-label Phase 1b)
-// with nine cases sitting at every point of the regulatory clock: due soon,
+// with eleven cases sitting at every point of the regulatory clock: due soon,
 // overdue, submitted and acknowledged, serious-but-expected, non-serious,
-// follow-up in flight, nullified duplicate, placebo after unblinding, and an
-// intake item from the EDC that is not yet a valid ICSR. The second sponsor
-// has one case so sponsor-scoped grants have something to hide (ADR-0015).
+// follow-up in flight, nullified duplicate, placebo after unblinding, an
+// intake item from the EDC that is not yet a valid ICSR, an anticipated SAE
+// held from individual FDA reporting per the safety surveillance plan, and a
+// case where the investigator and the sponsor disagree on causality. The
+// second sponsor has one case so sponsor-scoped grants have something to hide
+// (ADR-0015).
 //
 // The dictionary is a labeled illustrative subset with synthetic codes; it is
 // not MedDRA and never claims to be (ADR-0005). Seed writes are audited under
@@ -39,8 +42,9 @@ await db.transaction(async (tx) => {
   await tx.execute(sql`
     TRUNCATE audit_event, submission_acknowledgement, submission, expected_submission_waiver,
       expected_submission, reporting_rule, signature, case_transition, case_nullification,
-      case_unblinding, case_attachment, case_narrative, case_test, case_assessment, case_drug,
-      case_event, case_source, case_patient, case_version, "case", rsi_listed_term,
+      case_unblinding, case_attachment, case_narrative, case_test, case_event_designation,
+      case_assessment, case_drug, case_event, case_source, case_patient, case_version, "case",
+      study_anticipated_event_term, study_anticipated_event, rsi_listed_term,
       product_rsi_version, study_product, product, reporting_destination, access_grant,
       study_site, site, study, person, organization, dictionary_term, dictionary, app_meta
     CASCADE`);
@@ -153,6 +157,9 @@ await db.transaction(async (tx) => {
     ["Decreased appetite", "Metabolism and nutrition disorders", "Loss of appetite"],
     ["Back pain", "Musculoskeletal and connective tissue disorders"],
     ["Arthralgia", "Musculoskeletal and connective tissue disorders", "Joint pain"],
+    ["Pathological fracture", "Musculoskeletal and connective tissue disorders"],
+    ["Spinal cord compression", "Nervous system disorders"],
+    ["Disease progression", "General disorders and administration site conditions"],
     ["Insomnia", "Psychiatric disorders"],
     ["Anxiety", "Psychiatric disorders"],
     ["Fall", "Injury, poisoning and procedural complications"],
@@ -311,6 +318,52 @@ await db.transaction(async (tx) => {
     { studyId: corc9999, productId: corc101, role: "imp" },
   ]);
 
+  // --- anticipated serious adverse events (FDA IND safety reporting, Dec 2025 §V.A) ---
+  // CORC-2201's safety surveillance plan lists SAEs anticipated in an mCRPC
+  // population independent of the drug; the sponsor does not report them to
+  // FDA as individual IND safety reports and reviews them in aggregate. No
+  // predicted rate is seeded: a rate never appears here without a real,
+  // cited basis, and the demo has none.
+  const anticipated = async (
+    studyId: string,
+    label: string,
+    planReference: string,
+    ptNames: string[],
+  ) => {
+    const [row] = await tx
+      .insert(s.studyAnticipatedEvent)
+      .values({
+        studyId,
+        label,
+        prespecified: true,
+        planReference,
+        effectiveFrom: day(-200),
+        approvedBy: priya,
+      })
+      .returning({ id: s.studyAnticipatedEvent.id });
+    await tx.insert(s.studyAnticipatedEventTerm).values(
+      ptNames.map((name) => ({
+        anticipatedEventId: row!.id,
+        dictionaryId: dictId,
+        ptCode: pt[name]!.code,
+        ptTerm: name,
+      })),
+    );
+    return row!.id;
+  };
+  const skeletalConcept = await anticipated(
+    corc2201,
+    "Skeletal complications of bone metastases",
+    "SSP v1.0 §4.2",
+    ["Pathological fracture", "Spinal cord compression", "Back pain"],
+  );
+  await anticipated(
+    corc2201,
+    "Death or hospitalization from progression of prostate cancer",
+    "SSP v1.0 §4.2",
+    ["Disease progression", "Death"],
+  );
+
   const siteRow = async (organizationId: string, name: string, city: string, country: string) =>
     (
       await tx
@@ -371,6 +424,13 @@ await db.transaction(async (tx) => {
     v: Omit<typeof s.reportingRule.$inferInsert, "effectiveFrom"> & { effectiveFrom?: string },
   ) => tx.insert(s.reportingRule).values({ effectiveFrom: day(-400), ...v });
   const susar = { serious: true, unexpected: true, related: true } as const;
+  // Under 21 CFR 312.32 the sponsor's causality judgment decides an IND safety
+  // report (FDA, Sponsor Responsibilities, Dec 2025 §III.B, §IV.A), and an SAE
+  // the sponsor designated anticipated in the study population is not
+  // reported individually (§IV.A.2.a, §V.A). Both are attributes of the FDA
+  // rules only; the EU CTR, investigator, and IRB rules below keep ICH E2A's
+  // "either party" basis and no carve-out.
+  const fdaBasis = { causalityBasis: "sponsor", excludesAnticipated: true } as const;
   for (const sponsorOrgId of [corc, northlake]) {
     await rule({
       sponsorOrgId,
@@ -379,6 +439,7 @@ await db.transaction(async (tx) => {
       citation: "21 CFR 312.32(c)(2); ICH E2A §III.B.1",
       reportTypes: ["study"],
       ...susar,
+      ...fdaBasis,
       fatalOrLifeThreatening: true,
       timelineDays: 7,
       satisfyingKinds: ["initial_notification", "initial_report"],
@@ -390,6 +451,7 @@ await db.transaction(async (tx) => {
       citation: "21 CFR 312.32(c)(1)(i); ICH E2A §III.B.2",
       reportTypes: ["study"],
       ...susar,
+      ...fdaBasis,
       timelineDays: 15,
       satisfyingKinds: ["initial_report"],
     });
@@ -511,9 +573,15 @@ await db.transaction(async (tx) => {
     drugs: DrugSpec[];
     reporterRelated?: boolean;
     sponsorRelated?: boolean | null; // null = not yet assessed
+    sponsorCausalityResult?: string;
     override?: { expectedness: "expected" | "unexpected"; rationale: string };
+    // The sponsor's designation of every event as anticipated in the study
+    // population (naming a concept on the study's list) with an optional rationale.
+    anticipated?: { conceptId: string; rationale?: string };
     narrative: string;
     createdBy?: string;
+    receivedVia: (typeof s.receiptChannel.enumValues)[number];
+    receivedRef?: string;
     source?: { system: string; ref: string; payload: unknown };
     country: string;
   };
@@ -643,14 +711,25 @@ await db.transaction(async (tx) => {
             assessor: "sponsor",
             reasonablePossibility: spec.sponsorRelated,
             causalityMethod: "Sponsor medical review",
-            causalityResult: spec.sponsorRelated
-              ? "Reasonable possibility"
-              : "No reasonable possibility",
+            causalityResult:
+              spec.sponsorCausalityResult ??
+              (spec.sponsorRelated ? "Reasonable possibility" : "No reasonable possibility"),
             expectednessOverride: spec.override?.expectedness ?? null,
             expectednessRationale: spec.override?.rationale ?? null,
           });
         }
       }
+    }
+    if (spec.anticipated) {
+      await tx.insert(s.caseEventDesignation).values(
+        eventIds.map((eventId) => ({
+          caseVersionId: versionId,
+          caseEventId: eventId,
+          anticipated: true,
+          anticipatedEventId: spec.anticipated!.conceptId,
+          rationale: spec.anticipated!.rationale ?? null,
+        })),
+      );
     }
     await tx
       .insert(s.caseNarrative)
@@ -669,6 +748,8 @@ await db.transaction(async (tx) => {
         studyId: spec.studyId,
         productId: spec.productId,
         firstReceivedDate: day(spec.firstReceived),
+        receivedVia: spec.receivedVia,
+        receivedRef: spec.receivedRef ?? null,
         sourceSystem: spec.source?.system ?? null,
         sourceRef: spec.source?.ref ?? null,
         intakePayload: spec.source ? spec.source.payload : null,
@@ -840,6 +921,7 @@ await db.transaction(async (tx) => {
       reporter: brooksReporter,
       firstReceived: -4,
       country: "US",
+      receivedVia: "email",
       events: [
         {
           reported: "Myelodysplastic syndrome, fatal",
@@ -923,6 +1005,7 @@ await db.transaction(async (tx) => {
       reporter: muellerReporter,
       firstReceived: -20,
       country: "DE",
+      receivedVia: "fax",
       events: [
         {
           reported: "Interstitielle Lungenerkrankung, hospitalization",
@@ -969,6 +1052,7 @@ await db.transaction(async (tx) => {
       reporter: patelReporter,
       firstReceived: -28,
       country: "US",
+      receivedVia: "email",
       events: [
         {
           reported: "Acute kidney injury requiring hospitalization",
@@ -1047,6 +1131,7 @@ await db.transaction(async (tx) => {
       reporter: pacificReporter,
       firstReceived: -38,
       country: "US",
+      receivedVia: "email",
       events: [
         {
           reported: "Anemia grade 4 requiring transfusion",
@@ -1083,6 +1168,7 @@ await db.transaction(async (tx) => {
       reporter: brooksReporter,
       firstReceived: -8,
       country: "US",
+      receivedVia: "email",
       events: [{ reported: "Nausea grade 2", ptName: "Nausea", onset: -10, outcome: "recovering" }],
       drugs: [
         {
@@ -1116,6 +1202,7 @@ await db.transaction(async (tx) => {
       reporter: brooksReporter,
       firstReceived: -28,
       country: "US",
+      receivedVia: "email",
       events: [
         {
           reported: "Generalized tonic-clonic seizure",
@@ -1213,6 +1300,7 @@ await db.transaction(async (tx) => {
       reporter: patelReporter,
       firstReceived: -27,
       country: "US",
+      receivedVia: "fax",
       events: [
         {
           reported: "Acute renal failure, hospitalized",
@@ -1290,6 +1378,7 @@ await db.transaction(async (tx) => {
       reporter: pacificReporter,
       firstReceived: -10,
       country: "US",
+      receivedVia: "email",
       events: [
         {
           reported: "Neutropenia grade 4, prolonged >7 days, with fever",
@@ -1373,12 +1462,114 @@ await db.transaction(async (tx) => {
       drugs: [blindedImp(-30)],
       narrative: "Received from edc-core SAE form; reporter details pending from site 003.",
       createdBy: ingest,
+      receivedVia: "edc_push",
+      receivedRef: "SAE-2201-003-004-1",
       source: { system: "edc-core", ref: "SAE-2201-003-004-1", payload },
     };
     await createCase(spec);
   }
 
-  // 10. Second sponsor: a pending 15-day case CORC-scoped staff must never see.
+  // 10. Anticipated SAE (FDA IND safety reporting, Dec 2025 §IV.A.2.a, §V.A):
+  // a pathological fracture in a bone-metastatic mCRPC participant, on the
+  // study's list. Serious, unexpected (not in the IB), and neither party can
+  // rule the drug out on a single case, so it is a SUSAR for EudraVigilance
+  // and the investigators; the sponsor's designation holds the FDA IND 15-day
+  // rule back for aggregate review. In medical review, unsigned, both clocks
+  // pending.
+  {
+    const spec: CaseSpec = {
+      n: 10,
+      studyId: corc2201,
+      productId: corc101,
+      studySiteId: ss2201_003,
+      subject: "2201-003-011",
+      initials: "HW",
+      age: 74,
+      reporter: muellerReporter,
+      firstReceived: -2,
+      country: "DE",
+      events: [
+        {
+          reported: "Pathological fracture of the left femur, hospitalized for fixation",
+          ptName: "Pathological fracture",
+          onset: -6,
+          outcome: "recovering",
+          hospitalization: true,
+        },
+      ],
+      drugs: [blindedImp(-95)],
+      reporterRelated: true,
+      sponsorRelated: true,
+      sponsorCausalityResult:
+        "Cannot be ruled out on a single case; anticipated in mCRPC per SSP v1.0 §4.2, monitored in aggregate",
+      anticipated: {
+        conceptId: skeletalConcept,
+        rationale:
+          "Known femoral metastasis on the baseline bone scan; fracture after a fall at home. Skeletal complications of bone metastases are listed as anticipated in the safety surveillance plan.",
+      },
+      narrative:
+        "Fall at home with fracture through a known lytic femoral metastasis, admitted for intramedullary fixation. Investigator: possibly related (cannot exclude a contribution of study treatment to bone fragility).",
+      receivedVia: "email",
+      receivedRef: "SAE form by email from site 003, ref SAE-2201-003-011-1",
+    };
+    const { caseId, versionId } = await createCase(spec);
+    await attach(
+      caseId,
+      versionId,
+      "source_document",
+      "SAE-report-2201-003-011.pdf",
+      "application/pdf",
+      makePdf([
+        "Serious Adverse Event Report",
+        "Protocol CORC-2201, site 003, subject 2201-003-011",
+        "Event: pathological fracture of the femur, hospitalization",
+      ]),
+    );
+    await transition(caseId, versionId, "medical_review", -1);
+  }
+
+  // 11. Investigator and sponsor disagree on causality: acute kidney injury the
+  // investigator calls related and the sponsor, after review, does not. Both
+  // opinions stay on the record and travel with the report; the EU CTR
+  // 15-day rule (either party) is due, the FDA IND rule (sponsor's judgment,
+  // 21 CFR 312.32) is not. In medical review, unsigned.
+  {
+    const spec: CaseSpec = {
+      n: 11,
+      studyId: corc2201,
+      productId: corc101,
+      studySiteId: ss2201_002,
+      subject: "2201-002-006",
+      initials: "DL",
+      age: 71,
+      reporter: pacificReporter,
+      firstReceived: -3,
+      country: "US",
+      events: [
+        {
+          reported: "Acute kidney injury after three days of diarrhoea, hospitalized for IV fluids",
+          ptName: "Acute kidney injury",
+          onset: -5,
+          end: -1,
+          outcome: "recovered",
+          hospitalization: true,
+        },
+      ],
+      drugs: [blindedImp(-60)],
+      reporterRelated: true,
+      sponsorRelated: false,
+      sponsorCausalityResult:
+        "No reasonable possibility: prerenal injury from dehydration after diarrhoea; creatinine normalized within 48 hours of fluids without a change to study treatment",
+      narrative:
+        "Three days of watery diarrhoea, then oliguria; creatinine 3.1 mg/dL on admission, 1.1 mg/dL after 48 hours of IV fluids. Study treatment continued unchanged. Investigator: possibly related.",
+      receivedVia: "phone",
+      receivedRef: "Called in by the site coordinator; SAE form to follow",
+    };
+    const { caseId, versionId } = await createCase(spec);
+    await transition(caseId, versionId, "medical_review", -2);
+  }
+
+  // Second sponsor: a pending 15-day case CORC-scoped staff must never see.
   {
     const spec: CaseSpec = {
       n: 1,
@@ -1391,6 +1582,7 @@ await db.transaction(async (tx) => {
       reporter: patelReporter,
       firstReceived: -6,
       country: "US",
+      receivedVia: "email",
       events: [
         {
           reported: "Atrial fibrillation with rapid ventricular response",

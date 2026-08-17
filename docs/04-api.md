@@ -21,7 +21,9 @@ spec is generated from the same zod schemas that validate requests:
    `/audit-chain/verify`, and `/signature-integrity` expose the trail and its integrity
    checks.
 5. **The clock is explainable**: `/case-versions/{id}/rule-matches` answers "why does this
-   rule apply to this case" from the same predicate the engine uses.
+   rule apply to this case" from the same predicate the engine uses, and lists the rules a
+   sponsor's anticipated designation held back (`excluded_reason: "anticipated"`) so a
+   missing clock is explained rather than absent.
 
 Auth: `Authorization: Bearer <token>`. Two modes, selected by `AUTH_MODE`:
 
@@ -139,6 +141,26 @@ DBI::dbGetQuery(con, "SELECT protocol_number, destination_name, pct_on_time, ove
                       FROM v_reporting_compliance ORDER BY 1, 2")
 ```
 
+## Sponsor judgments: assessments and anticipated designations
+
+- `PUT /case-versions/{id}/assessments`: the drug-by-event causality rows for both
+  assessors, expectedness overrides with rationale. Gated `assess`.
+- `PUT /case-versions/{id}/designations`: the sponsor's per-event designation as
+  anticipated in the study population (naming a concept on the study's list) or not.
+  Gated `assess`, never accepted on `POST /cases`; the clock resyncs and the version hash
+  covers the designations (ADR-0019).
+- `GET /anticipated-events`, `GET /studies/{id}/anticipated-events`: each study's list of
+  anticipated serious adverse events with their preferred terms, plan reference or
+  justification, and predicted rate with its basis when one was recorded.
+  `POST /anticipated-events` (administer, scope from `study_id` in the body) adds a concept;
+  `POST /anticipated-events/{id}/end` ends one. Concepts are never edited or deleted.
+- `POST /reporting-rules` accepts `excludes_anticipated` and `causality_basis`, the two
+  attributes that decide whether an FDA IND rule sees a designated event and whose
+  causality opinion starts its clock (ADR-0020).
+- `POST /cases` accepts `received_via` (`email` | `fax` | `phone` | `edc_push` | `other`)
+  and `received_ref`, the human provenance of a report; a machine push also carries
+  `source`.
+
 ## Renderings, exports, and the digest
 
 - `GET /case-versions/{id}/cioms1.pdf` and `/medwatch-3500a.pdf`: CIOMS I and Form FDA
@@ -148,7 +170,9 @@ DBI::dbGetQuery(con, "SELECT protocol_number, destination_name, pct_on_time, ove
 - `GET /files/{sha256}`: the bytes behind any attachment or stored payload, scoped to the
   case that holds them (documented informally; binary response).
 - `GET /studies/{id}/digest`: the reminders digest as `pnpm digest` would mail it, with
-  its derived recipient list (ADR-0014).
+  its derived recipient list (ADR-0014). Two sections were added in this pass: cases where
+  the investigator and sponsor differ on causality (an action item) and anticipated SAEs
+  held from individual IND reporting (informational, with their other open obligations).
 
 ## Errors
 

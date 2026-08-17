@@ -90,11 +90,46 @@ export async function reportability(
     ORDER BY c.sender_case_id, r.version_number` as unknown as Promise<Row[]>;
 }
 
+/**
+ * Rules that apply to the version, plus rules that would apply but for the
+ * sponsor's anticipated designation(s) (excluded_reason = 'anticipated'), so a
+ * missing clock is explained rather than silent (ADR-0007).
+ */
 export async function ruleMatches(sql: Sql, versionId: string): Promise<Row[]> {
   return sql`
-    SELECT m.*, rr.name AS rule_name, rr.citation, d.name AS destination_name
+    SELECT m.*, rr.name AS rule_name, rr.citation, d.name AS destination_name,
+      NULL::text AS excluded_reason, NULL::text AS anticipated_labels
     FROM v_rule_match m JOIN reporting_rule rr ON rr.id = m.reporting_rule_id JOIN reporting_destination d ON d.id = rr.destination_id
-    WHERE m.case_version_id = ${versionId} ORDER BY rr.name` as unknown as Promise<Row[]>;
+    WHERE m.case_version_id = ${versionId}
+    UNION ALL
+    SELECT x.case_version_id, x.case_id, x.version_number, x.reporting_rule_id, x.destination_id,
+      x.obligation_kind, x.timeline_days, x.clock_start_date,
+      rr.name AS rule_name, rr.citation, d.name AS destination_name,
+      'anticipated'::text AS excluded_reason, x.anticipated_labels
+    FROM v_rule_anticipated_exclusion x JOIN reporting_rule rr ON rr.id = x.reporting_rule_id JOIN reporting_destination d ON d.id = rr.destination_id
+    WHERE x.case_version_id = ${versionId}
+    ORDER BY excluded_reason NULLS FIRST, rule_name` as unknown as Promise<Row[]>;
+}
+
+/** The anticipated-event concepts of the studies a scope can read, with their terms. */
+export async function listAnticipatedEvents(
+  sql: Sql,
+  scope: ReadableScope,
+  studyId?: string,
+): Promise<Row[]> {
+  return sql`
+    SELECT ae.*, st.protocol_number, st.sponsor_org_id,
+      p.given_name || ' ' || p.family_name AS approved_by_name,
+      (SELECT json_agg(json_build_object('pt_code', t.pt_code, 'pt_term', t.pt_term) ORDER BY t.pt_term)
+         FROM study_anticipated_event_term t WHERE t.anticipated_event_id = ae.id) AS terms
+    FROM study_anticipated_event ae
+    JOIN study st ON st.id = ae.study_id
+    LEFT JOIN person p ON p.id = ae.approved_by
+    WHERE ${scopeFilter(sql, scope, "ae.study_id", "st.sponsor_org_id")}
+      AND (${studyId ?? null}::uuid IS NULL OR ae.study_id = ${studyId ?? null}::uuid)
+    ORDER BY st.protocol_number, (ae.effective_to IS NOT NULL), ae.effective_from DESC, ae.label` as unknown as Promise<
+    Row[]
+  >;
 }
 
 export async function dsurSarLineListing(
@@ -143,7 +178,7 @@ export async function caseDetail(sql: Sql, caseId: string): Promise<Row | null> 
     SELECT c.*, q.state, q.expedited_class, q.reportability_reason, q.causality_assessed, q.minimum_criteria_met,
       q.is_unblinded, q.is_nullified, q.latest_version_id, q.latest_version_number, q.open_obligations,
       q.overdue_obligations, q.next_due_date, q.days_remaining, q.protocol_number, q.product_name, q.sponsor_org_id,
-      q.is_blinded, st.title AS study_title,
+      q.is_blinded, q.any_anticipated, q.any_causality_disagreement, st.title AS study_title,
       cb.given_name || ' ' || cb.family_name AS created_by_name
     FROM "case" c
     JOIN v_case_queue q ON q.case_id = c.id
@@ -155,6 +190,7 @@ export async function caseDetail(sql: Sql, caseId: string): Promise<Row | null> 
     SELECT cv.*, d.version AS dictionary_version, d.is_demo_subset,
       mc.minimum_criteria_met, mc.missing,
       r.expedited_class, r.reason AS reportability_reason, r.any_serious, r.any_susar, r.causality_assessed,
+      r.any_anticipated, r.all_susar_anticipated, r.any_causality_disagreement,
       (SELECT count(*) FROM signature s WHERE s.case_version_id = cv.id) > 0 AS is_locked,
       pv_case_version_sha256(cv.id) AS sha256,
       cb.given_name || ' ' || cb.family_name AS created_by_name
@@ -170,8 +206,12 @@ export async function caseDetail(sql: Sql, caseId: string): Promise<Row | null> 
     v.sources = await sql`SELECT * FROM case_source WHERE case_version_id = ${id} ORDER BY seq`;
     v.events = await sql`
       SELECT e.*, er.serious, er.fatal_or_life_threatening, er.expectedness, er.expectedness_basis, er.rsi_label,
-        er.reporter_assessed, er.sponsor_assessed, er.reporter_related, er.sponsor_related, er.related_either
+        er.reporter_assessed, er.sponsor_assessed, er.reporter_related, er.sponsor_related, er.related_either,
+        er.causality_disagreement, er.anticipated, er.anticipated_basis, er.anticipated_event_id,
+        er.anticipated_label, er.anticipated_plan_reference, er.anticipated_candidate,
+        g.id AS designation_id, g.rationale AS designation_rationale
       FROM case_event e JOIN v_case_event_reportability er ON er.case_event_id = e.id
+      LEFT JOIN case_event_designation g ON g.case_event_id = e.id
       WHERE e.case_version_id = ${id} ORDER BY e.seq`;
     v.drugs =
       await sql`SELECT d.*, p.name AS product_name FROM case_drug d LEFT JOIN product p ON p.id = d.product_id WHERE d.case_version_id = ${id} ORDER BY d.seq`;
@@ -238,6 +278,7 @@ export async function caseAuditTrail(sql: Sql, caseId: string, limit = 500): Pro
       UNION SELECT e.id::text FROM case_event e JOIN case_version cv ON cv.id = e.case_version_id WHERE cv.case_id = ${caseId}
       UNION SELECT d.id::text FROM case_drug d JOIN case_version cv ON cv.id = d.case_version_id WHERE cv.case_id = ${caseId}
       UNION SELECT a.id::text FROM case_assessment a JOIN case_version cv ON cv.id = a.case_version_id WHERE cv.case_id = ${caseId}
+      UNION SELECT g.id::text FROM case_event_designation g JOIN case_version cv ON cv.id = g.case_version_id WHERE cv.case_id = ${caseId}
       UNION SELECT t.id::text FROM case_test t JOIN case_version cv ON cv.id = t.case_version_id WHERE cv.case_id = ${caseId}
       UNION SELECT n.id::text FROM case_narrative n JOIN case_version cv ON cv.id = n.case_version_id WHERE cv.case_id = ${caseId}
       UNION SELECT s.id::text FROM signature s JOIN case_version cv ON cv.id = s.case_version_id WHERE cv.case_id = ${caseId}

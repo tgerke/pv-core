@@ -9,6 +9,8 @@ import {
   rsiListedTerm,
   site,
   study,
+  studyAnticipatedEvent,
+  studyAnticipatedEventTerm,
   studyProduct,
   studySite,
 } from "@pv-core/db";
@@ -235,6 +237,86 @@ export async function endRsiVersion(
         .update(productRsiVersion)
         .set({ effectiveTo })
         .where(eq(productRsiVersion.id, rsiVersionId));
+    }),
+  );
+}
+
+export type AnticipatedRateUnit = "per_100_participant_years" | "proportion";
+
+/**
+ * A serious adverse event anticipated in the study population, as listed in
+ * the safety surveillance plan (FDA IND safety reporting guidance, December
+ * 2025, §V.A): one medical concept, its Preferred Terms, and, when the plan
+ * states one, the predicted rate with its basis. A concept added during the
+ * trial (§VI.A) is not prespecified and carries the clinical justification.
+ */
+export interface AnticipatedEventInput {
+  studyId: string;
+  label: string;
+  prespecified?: boolean;
+  planReference?: string | null;
+  justification?: string | null;
+  predictedRate?: number | null;
+  rateUnit?: AnticipatedRateUnit | null;
+  rateBasis?: string | null;
+  effectiveFrom: string;
+  approvedBy?: string | null;
+  dictionaryId: string;
+  terms: { ptCode: string; ptTerm: string }[];
+}
+
+export async function createAnticipatedEvent(db: Db, actor: Actor, input: AnticipatedEventInput) {
+  return guarded(() =>
+    withActor(db, actor, async (tx) => {
+      if (input.terms.length === 0)
+        throw new CoreError("invalid", "an anticipated event names at least one Preferred Term");
+      const [row] = await tx
+        .insert(studyAnticipatedEvent)
+        .values({
+          studyId: input.studyId,
+          label: input.label,
+          prespecified: input.prespecified ?? true,
+          planReference: input.planReference ?? null,
+          justification: input.justification ?? null,
+          predictedRate: input.predictedRate == null ? null : String(input.predictedRate),
+          rateUnit: input.rateUnit ?? null,
+          rateBasis: input.rateBasis ?? null,
+          effectiveFrom: input.effectiveFrom,
+          approvedBy: input.approvedBy ?? null,
+        })
+        .returning({ id: studyAnticipatedEvent.id });
+      await tx.insert(studyAnticipatedEventTerm).values(
+        input.terms.map((t) => ({
+          anticipatedEventId: row!.id,
+          dictionaryId: input.dictionaryId,
+          ptCode: t.ptCode,
+          ptTerm: t.ptTerm,
+        })),
+      );
+      return row!;
+    }),
+  );
+}
+
+export async function endAnticipatedEvent(
+  db: Db,
+  actor: Actor,
+  anticipatedEventId: string,
+  effectiveTo: string,
+) {
+  await guarded(() =>
+    withActor(db, actor, async (tx) => {
+      const [v] = await tx
+        .select({ id: studyAnticipatedEvent.id, effectiveTo: studyAnticipatedEvent.effectiveTo })
+        .from(studyAnticipatedEvent)
+        .where(eq(studyAnticipatedEvent.id, anticipatedEventId))
+        .limit(1);
+      if (!v) throw new CoreError("not_found", "anticipated event not found");
+      if (v.effectiveTo) throw new CoreError("conflict", "anticipated event already ended");
+      await tx
+        .update(studyAnticipatedEvent)
+        .set({ effectiveTo })
+        .where(eq(studyAnticipatedEvent.id, anticipatedEventId));
     }),
   );
 }

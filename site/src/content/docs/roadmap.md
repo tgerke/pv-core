@@ -47,13 +47,16 @@ comparison is meaningless without them.
 | MedDRA coding | Yes, against a licensed release you load yourself (`pnpm db:import-meddra`); nothing licensed ships in the repository. |
 | WHODrug coding of concomitant medications | No. The dictionary tables already accommodate it; the importer and UI do not. |
 | CIOMS I and MedWatch 3500A as submission-ready PDFs | Yes, rendered from the signed version with field lists transcribed from the official forms (ADR-0012), stored as the submission payload. |
-| An E2B(R3) file a regulator or EudraVigilance accepts | Partly. Export is JSON keyed by E2B(R3) element IDs. Schema-valid XML waits until the ICH schema package is in the verified source library (ADR-0009). |
+| An E2B(R3) file a regulator or EudraVigilance accepts | Partly. Export is JSON keyed by E2B(R3) element IDs. Schema-valid XML waits until the ICH schema package is in the verified source library (ADR-0009). Since April 1, 2026 FAERS requires E2B(R3) for IND safety reports from non-exempt INDs, so this is the first arc for a commercial-sponsor CRO; noncommercial INDs may still send the 3500A PDF this system renders. |
 | Gateway transmission | Boundary; see above. |
 | 7-day and 15-day clocks, compliance metrics, reminders | Yes: the reporting-obligation engine, `v_reporting_compliance`, and `pnpm digest`. |
 | Source documents on the case | Yes: content-addressed attachments; WORM with the s3 driver and Object Lock. |
 | DSUR line listings and cumulative SAE tabulation | Yes as views. Exposure tables and the remaining DSUR sections are not generated. |
 | PSUR/PBRER | Boundary this phase. |
-| SAE reconciliation with the EDC | No. The intake seam and a reconciliation listing are the next arc. |
+| SAE reconciliation with the EDC | No. The intake seam and a reconciliation listing are the next arc; the case now records how each report arrived (`received_via`). |
+| Investigator/sponsor causality disagreement | Yes. Both opinions are kept and transmitted, the difference is derived and surfaced (queue, DSUR comment, digest), and each rule says whose opinion starts its clock (ADR-0020). Resolution with the site runs through the EDC query or correspondence, never an in-app adjudication. |
+| Anticipated SAE lists and aggregate review under FDA's December 2025 IND safety reporting guidance | Partly. The dated study list, the sponsor's per-event designation, and the rule carve-out are here and every held-back report is named (ADR-0019); the aggregate analysis (observed against predicted, per-arm imbalance) is not, because pv-core holds no exposure denominator. |
+| A site-facing SAE report form | No. Sites report by their SAE form, phone, fax, or the EDC; the New case form and the intake service are the two ways in. |
 | SSO, role-based access, sponsor segregation on one instance | Yes: OIDC, grants scoped to a sponsor organization or a study, DML-only runtime role. |
 | Validation documentation | Generated IQ/OQ reports and a requirement-to-test traceability matrix (`docs/validation/`). The CSV program is organizational. |
 | Duplicate detection, literature monitoring, signal detection | No. |
@@ -80,6 +83,24 @@ Argus and Vault Safety both offer SAE reconciliation against the sponsor's EDC. 
 seam is designed (a machine-identity intake, ADR-0001 boundary) but not built; the
 reconciliation listing that compares EDC-reported serious events with pv-core cases is
 the natural next query.
+
+### Aggregate review of anticipated SAEs
+
+FDA's December 2025 guidance asks the sponsor to compare the observed rate of each
+anticipated SAE with a predicted rate from placebo databases, literature, registries, or
+records, and to unblind by arm when a trigger is crossed (§VI.C). pv-core has the list and
+the designations; it lacks the denominator (participants or participant-years, which the
+CTMS or randomization system holds) and the firewalled per-arm view. A monitoring view
+that shows pooled counts next to the plan's predicted rate and its source is the next step;
+the unblinded imbalance test stays with the sponsor's safety assessment entity.
+
+### A query to the site, and a site-facing form
+
+When the medical reviewer disagrees with the investigator, the request to reconsider goes
+through the EDC query or a letter today, and the answer arrives as follow-up information.
+A `case_query` record inside pv-core, and a form a site coordinator fills instead of
+emailing a PDF, are both plausible next arcs; both were left out so the first pass keeps
+the case as the record and the EDC as the site's workflow.
 
 ### Duplicate detection, literature, signals
 

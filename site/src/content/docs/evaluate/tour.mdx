@@ -1,0 +1,425 @@
+---
+title: "A case, from intake to acknowledgement"
+description: "A guided tour of pv-core in fifteen screens: a serious adverse event arrives, is coded and assessed, grows a regulatory clock, is signed, submitted, acknowledged, and followed up. Then the scenarios a clock has to survive."
+sidebar:
+  label: Guided tour
+---
+
+import { Code, Tabs, TabItem } from "@astrojs/starlight/components";
+import Walkthrough from "../../../components/Walkthrough.astro";
+import WalkStep from "../../../components/WalkStep.astro";
+import Shot from "../../../components/Shot.astro";
+
+import queue from "../../../assets/screenshots/queue.webp";
+import newCasePartial from "../../../assets/screenshots/new-case-partial.webp";
+import newCaseValid from "../../../assets/screenshots/new-case-valid.webp";
+import caseIntake from "../../../assets/screenshots/case-9-intake.webp";
+import eventsTab from "../../../assets/screenshots/events-tab.webp";
+import assessmentsTab from "../../../assets/screenshots/assessments-tab.webp";
+import obligationsCard from "../../../assets/screenshots/obligations-card.webp";
+import ruleMatchesCard from "../../../assets/screenshots/rule-matches-card.webp";
+import dialogSign from "../../../assets/screenshots/dialog-sign-medical-review.webp";
+import caseApproved from "../../../assets/screenshots/case-1-approved.webp";
+import dialogSubmission from "../../../assets/screenshots/dialog-record-submission.webp";
+import cioms1 from "../../../assets/generated/cioms1-US-CORC-2026-0001.png";
+import submissionsCard from "../../../assets/screenshots/submissions-card.webp";
+import caseFollowUp from "../../../assets/screenshots/case-6-follow-up-v2.webp";
+import reporting from "../../../assets/screenshots/reporting.webp";
+
+import caseWaived from "../../../assets/screenshots/case-8-waived-placebo.webp";
+import factsCard from "../../../assets/screenshots/facts-card.webp";
+import caseNullified from "../../../assets/screenshots/case-7-nullified.webp";
+import caseExpected from "../../../assets/screenshots/case-4-serious-expected.webp";
+import caseUnassessed from "../../../assets/screenshots/case-5-data-entry.webp";
+
+import queueProcessor from "../../../assets/screenshots/queue-processor.webp";
+import queueReviewer from "../../../assets/screenshots/queue-reviewer.webp";
+import queueReadonly from "../../../assets/screenshots/queue-readonly.webp";
+import queueIngest from "../../../assets/screenshots/queue-ingest.webp";
+
+import dsurListing from "../../../assets/screenshots/dsur-sar-line-listing.webp";
+import dsurSummary from "../../../assets/screenshots/dsur-sae-summary.webp";
+import audit from "../../../assets/screenshots/audit.webp";
+import adminRules from "../../../assets/screenshots/admin-reporting-rules.webp";
+import adminRsi from "../../../assets/screenshots/admin-products-rsi.webp";
+import medwatch from "../../../assets/generated/medwatch-3500a-US-CORC-2026-0001.png";
+
+import digest from "../../../assets/generated/digest-CORC-2201.txt?raw";
+import e2b from "../../../assets/generated/e2b-US-CORC-2026-0001.json?raw";
+
+Fifteen screens follow one idea through the product: **the app never asks anyone to update
+a status.** People record facts (a report arrived, a physician assessed causality, a form was
+sent, a regulator acknowledged it) and every state on every page, including whether a case
+is reportable and when each report is due, is computed from those facts each time the page
+loads. The screens come from the seeded demo, so several cases stand in for one: each step
+names the case it shows. Use the arrow keys or the buttons to move; "Show all steps" lays
+the whole tour out on one page.
+
+<Walkthrough id="lifecycle" label="A case, from intake to acknowledgement">
+<WalkStep
+  id="step-queue"
+  title="The morning queue"
+  image={queue}
+  alt="The case queue as the CRO administrator: ten cases across two sponsors, overdue clocks first, four stat tiles, and filter chips for each derived state.">
+
+Dana Whitfield, the CRO administrator, sees every case across both sponsors. Overdue
+obligations sort first; the tiles count what needs attention today. Each row shows the
+case's derived state, its expedited class (7-day, 15-day, or not expedited, with the
+reason), the next due date, and how many obligations are open or overdue.
+
+</WalkStep>
+<WalkStep
+  id="step-new-case"
+  title="A serious event arrives"
+  image={newCasePartial}
+  alt="The new-case form with the study, patient initials, subject number, and one event entered; the Valid ICSR rail shows two of four criteria met and the button reads Save as intake.">
+
+A site sends an SAE form. Marcus Lee, case processor, opens **New case** and enters what
+arrived. The rail on the right tracks the four minimum criteria for a valid Individual Case
+Safety Report and updates as he types. With a patient and an event but no reporter and no
+suspect drug, the case would be saved as an **intake** item: visible in the queue, fully
+editable, and without a regulatory clock.
+
+</WalkStep>
+<WalkStep
+  id="step-valid"
+  title="Four criteria met"
+  image={newCaseValid}
+  alt="The same form after adding the reporter's family name and qualification and the suspect study drug; all four checks are green and the button reads Create case.">
+
+Add the reporter's name and the suspect drug and the button changes to **Create case**.
+The clock starts the day the sponsor first knows the case meets the criteria, recorded as
+the version's awareness date (day zero). It defaults to the date the information was
+received; when the two differ, the app requires a rationale and the audit trail keeps it.
+
+</WalkStep>
+<WalkStep
+  id="step-intake"
+  title="An intake item from the EDC"
+  image={caseIntake}
+  alt="Case US-CORC-2026-0009 pushed in by the EDC: the version card carries an amber notice that the case is below the E2B(R3) minimum criteria, missing an identifiable reporter.">
+
+Cases also arrive by machine. US-CORC-2026-0009 was pushed by the EDC through an intake
+identity that can create cases and read nothing back. It came without a reporter, so it
+sits in intake with a notice naming what is missing; the payload it arrived with is kept
+verbatim on the case, with its hash, so the provenance of every field is inspectable.
+
+</WalkStep>
+<WalkStep
+  id="step-coding"
+  title="Coding and the three judgments"
+  image={eventsTab}
+  alt="The Events tab of US-CORC-2026-0002: the reported German term, its MedDRA path from LLT to SOC, the hospitalization criterion, dates and outcome, and chips reading serious, unexpected against IB v2.0 §6.3, reporter related, sponsor related.">
+
+Reportability rests on three judgments per event: is it serious, is it unexpected, and is
+it reasonably related to the study drug. The event is coded to a Lowest Level Term from
+the loaded dictionary and the app records the full path. Seriousness is six checkboxes on
+the event. Expectedness is derived against the reference safety information in effect when
+the event occurred; here the term was not listed in the Investigator's Brochure version in
+force, so the event is unexpected. Causality is recorded per drug and event for both the
+reporter and the sponsor. Together they make US-CORC-2026-0002 a 15-day SUSAR.
+
+</WalkStep>
+<WalkStep
+  id="step-assessments"
+  title="Causality, drug by event by assessor"
+  image={assessmentsTab}
+  alt="The Assessments grid of US-CORC-2026-0001: one row per suspect drug, event, and assessor, with related yes or no, method, result, rechallenge, and an expectedness override column.">
+
+Assessments live in a grid of drug × event × assessor. The reporter's row and the
+sponsor's are separate; each records whether a reasonable possibility of a causal
+relationship exists, plus the method, the result wording, and any rechallenge information.
+Until the sponsor has assessed an event, the app treats it as related: the fail-safe
+direction is to over-report. The safety physician can override the derived expectedness in
+either direction, and the override must carry a rationale.
+
+</WalkStep>
+<WalkStep
+  id="step-obligations"
+  title="The clocks appear"
+  image={obligationsCard}
+  alt="The Obligations panel of US-CORC-2026-0002: three rows for the EU CTR SUSAR 15-day rule, the FDA IND 15-day rule, and the investigator notification letter, each with day zero, a due date five days past, and an Overdue chip.">
+
+The moment a case is valid, the app materializes every obligation the reporting rules
+imply, each with its day zero and due date. Rules are data an administrator keeps: a
+destination, a timeline in calendar days, and a test over the case. For this case three
+rules fire, one to EudraVigilance, one to the FDA, one to the study's investigators. Their
+status is derived on every read; here all three are overdue, and the record-submission
+button stays disabled until the version carries an approval signature.
+
+</WalkStep>
+<WalkStep
+  id="step-why"
+  title="Why does this rule apply?"
+  image={ruleMatchesCard}
+  alt="The Rule matches panel listing each rule that applies to version 1, its destination, the kind of report, the timeline in days, and day zero.">
+
+"Why does this rule apply" is a click away: the rule matches panel shows the predicate the
+engine evaluated for the version, with the rule's citation next to it. When an evaluator
+asks how a due date was arrived at, this is the answer, and it is the same answer a year
+later because rules are never edited in place; the old one is ended and a new one added.
+
+</WalkStep>
+<WalkStep
+  id="step-sign"
+  title="Medical review and signature"
+  image={dialogSign}
+  alt="The Sign medical review dialog: it explains that the signature records name, time, and meaning bound to the hash of this exact version, asks Priya Raman to re-authenticate, shows the version hash, and offers Confirm identity and sign.">
+
+When data entry is complete the case goes to medical review. Priya Raman MD reviews the
+sections and assessments, then signs. Signing asks her to re-authenticate; the signature
+records who, when, why, and the cryptographic hash of the exact version signed. The first
+signature locks the version: anything that must change afterwards is a new version.
+
+</WalkStep>
+<WalkStep
+  id="step-approved"
+  title="Approved and locked"
+  image={caseApproved}
+  alt="Case US-CORC-2026-0001 approved: the header shows 7-day, fatal, unblinded, and next due in three days; the version card shows v1 with a lock; the action bar offers Record submission and Open follow-up.">
+
+US-CORC-2026-0001 is a fatal, unexpected, related event and its 7-day clocks are due in
+three days. It carries both a medical-review signature and an approval, each shown with
+the hash it signed and whether the version still hashes to the same value. The version is
+locked; the actions left are to record what was sent or to open a follow-up.
+
+</WalkStep>
+<WalkStep
+  id="step-record"
+  title="Recording what was sent"
+  image={dialogSubmission}
+  alt="The Record submission dialog: destination FDA CDER preselected, kind initial, format with CIOMS I PDF, MedWatch 3500A PDF, E2B(R3) JSON, portal, and email as options, a payload attachment selector, message id and note.">
+
+Sending happens outside pv-core (a gateway, a portal, an email); recording it happens
+here. Choose the destination, the kind of report, and the format. For CIOMS I, Form FDA
+3500A, and the E2B(R3) JSON format the app renders the document itself from the approved
+version and stores the exact bytes; for anything else attach the file you sent. The
+database refuses a submission unless the version carries an approval signature bound to
+its current hash.
+
+</WalkStep>
+<WalkStep
+  id="step-cioms"
+  title="The rendered CIOMS I"
+  image={cioms1}
+  alt="Page one of the CIOMS I form rendered from US-CORC-2026-0001: reaction information, suspect drug, concomitant drugs, manufacturer information, and a footer naming the version and its SHA-256 hash.">
+
+The CIOMS I and 3500A renderings follow the official forms' field lists and name the
+version hash on every page, so what was sent can always be traced to what was signed. The
+footer says it plainly: a rendering is not the record; the signed version hash is.
+
+</WalkStep>
+<WalkStep
+  id="step-acknowledged"
+  title="Acknowledged"
+  image={submissionsCard}
+  alt="The Submissions panel of US-CORC-2026-0006: three submissions of version 1, to the FDA as CIOMS I with a CA acknowledgement, to EudraVigilance, and to the investigators, each with a payload download and the version hash that was sent.">
+
+US-CORC-2026-0006 went out three ways. Each submission row names the destination, the
+format, who sent it and when, the payload bytes (one click to download exactly what was
+sent), and the version hash that was current at the time. The FDA row carries its
+acknowledgement; the others show "no acknowledgement" until someone records one.
+
+</WalkStep>
+<WalkStep
+  id="step-follow-up"
+  title="New information: a follow-up"
+  image={caseFollowUp}
+  alt="Case US-CORC-2026-0006 with version 2 selected: a follow-up in data entry, the version toggles showing v1 locked and v2 open, and a fresh 15-day obligation next to the initial one that keeps its history.">
+
+Three days ago new information arrived on the same case. Opening a follow-up clones the
+approved version; the processor enters what changed, and a new follow-up obligation
+appears with its own day zero while the initial obligation keeps its history (submitted,
+on time or not). The locked v1 stays exactly as it was signed and sent.
+
+</WalkStep>
+<WalkStep
+  id="step-reporting"
+  title="Across studies, by due date"
+  image={reporting}
+  alt="The Reporting page: expected submissions across every study grouped by due date, with status chips, filter chips for overdue, due soon, pending, submitted, acknowledged, superseded, and waived, and record-submission actions on open rows.">
+
+The Reporting page is the same information across studies, grouped by due date and
+filterable by status, with on-time metrics per study and destination below. The same
+content goes out as a plain-text email once a day (or however often the team schedules it)
+to everyone whose grant covers the study; the digest stores nothing and reads the record
+at send time. There is an example [further down](#what-the-record-can-produce).
+
+</WalkStep>
+</Walkthrough>
+
+## Scenarios the clock has to survive
+
+Real caseloads are mostly edge cases. The seed stages the ones evaluators ask about first.
+
+<Tabs>
+  <TabItem label="Placebo after unblinding">
+    <Shot
+      src={caseWaived}
+      alt="Case US-CORC-2026-0008, closed: the header shows unblinded, every obligation row reads Waived with the waiver reason, and the arm is placebo."
+    />
+    <Shot
+      src={factsCard}
+      alt="The Facts panel: the unblinding fact with the arm Placebo, when and by whom it was recorded, the source system rtsm-core and its code-break reference, and the reason."
+      caption="Some obligations are not owed even though the rule matched. The waiver and its reason stay on the record; revoking one is itself a dated fact."
+    />
+    When a blinded case must be reported, the randomization system breaks the blind for that
+    subject and pv-core records the fact: the arm, when, why, and the code-break reference.
+    Here the subject turned out to be on placebo, so each obligation was waived with the
+    reason on record. The arm appears only where the record needs it; the DSUR tabulation reads it,
+    the queue does not.
+  </TabItem>
+  <TabItem label="A duplicate, nullified">
+    <Shot
+      src={caseNullified}
+      alt="Case US-CORC-2026-0007 nullified: the header carries a nullified chip, the action bar reads that no further changes are accepted, and the nullification fact with its reason is on the page."
+      caption="A duplicate or erroneous case is nullified with a reason. It keeps its history and accepts no further versions."
+    />
+    Because this duplicate had already been submitted, a nullification report was owed and
+    tracked like any other obligation. Nothing is deleted: the case, its versions, its
+    submissions, and the reason all stay readable.
+  </TabItem>
+  <TabItem label="Serious but expected">
+    <Shot
+      src={caseExpected}
+      alt="Case US-CORC-2026-0004, closed: a Grade 4 anaemia marked serious, the expectedness chip reads expected and listed in the IB, and the Obligations panel says no reporting obligation applies."
+      caption="Expected against the reference safety information in force at onset: serious, related, and still no expedited clock."
+    />
+    Expectedness is judged against the reference safety information (the Investigator's
+    Brochure section, or the label) in effect when the event occurred. Administrators keep
+    the RSI as dated versions with their listed Preferred Terms; the event shows the verdict
+    and its basis. No rule matches, so no obligation exists, and the case simply closes.
+  </TabItem>
+  <TabItem label="Causality not yet assessed">
+    <Shot
+      src={caseUnassessed}
+      alt="Case US-CORC-2026-0005 in data entry: a non-serious nausea event whose chips read reporter related and sponsor unassessed, with no obligations."
+      caption="The gap is visible rather than silent: the sponsor's assessment is missing and the event says so."
+    />
+    Until the sponsor has assessed an event, the app treats it as related. On a serious,
+    unexpected event that would start a clock and flag the case in the queue; on this
+    non-serious one it stays a visible reminder that the physician's judgment is still owed.
+  </TabItem>
+</Tabs>
+
+## Who sees what
+
+Access is a grant on a person: a role scoped to a sponsor organization, to a single study,
+or to the whole instance. A CRO hosts several sponsors on one instance and their staff never
+see each other's cases. The header shows who you are; the app renders only the actions your
+grants permit. The same queue, as each of the demo personas:
+
+<Tabs syncKey="persona">
+  <TabItem label="Administrator">
+    <Shot
+      src={queue}
+      alt="The queue as Dana Whitfield, CRO administrator: all ten cases across both sponsors, the New case button, and the Admin and Audit pages in the header."
+    />
+    Dana Whitfield, CRO administrator: everything, across both sponsors, including the
+    Admin and Audit pages.
+  </TabItem>
+  <TabItem label="Case processor">
+    <Shot
+      src={queueProcessor}
+      alt="The queue as Marcus Lee, case processor: nine cases, all from the main sponsor; the Northlake case is not listed."
+    />
+    Marcus Lee, case processor: intake, data entry, follow-ups, submissions and
+    acknowledgements, for the main sponsor only. The second sponsor's case is not in his
+    queue at all; the filtering happens on the server, not in the browser.
+  </TabItem>
+  <TabItem label="Medical reviewer">
+    <Shot
+      src={queueReviewer}
+      alt="The queue as Priya Raman MD, medical reviewer: nine cases from the main sponsor; the second sponsor's case is absent."
+    />
+    Priya Raman MD, safety physician: assessments, expectedness overrides, unblinding
+    facts, waivers, and signing, for the main sponsor only. On a case page her action bar
+    offers signing and returning a case to data entry; the administrator's offers everything.
+  </TabItem>
+  <TabItem label="Auditor">
+    <Shot
+      src={queueReadonly}
+      alt="The queue as Sam Okafor, auditor: all ten cases and no New case button; every write action is absent throughout the app."
+    />
+    Sam Okafor, auditor: read everything, change nothing. Every action button is absent
+    rather than disabled, and the API would answer 403 to any write.
+  </TabItem>
+  <TabItem label="EDC intake">
+    <Shot
+      src={queueIngest}
+      alt="The intake service identity: a notice that this identity can create records but cannot read anything back, and an empty queue."
+    />
+    The EDC intake service: create cases from a source system; read nothing back. The
+    notice is what a misconfigured integration would see.
+  </TabItem>
+</Tabs>
+
+## Oversight
+
+<Shot
+  src={dsurListing}
+  alt="The DSUR line listing of serious adverse reactions: case, study, subject, sex and age, country, arm, suspect drugs, PT, SOC, onset, outcome, seriousness, reporter and sponsor causality, expectedness, and RSI version, with a receipt-date filter and a Copy as TSV button."
+  caption="One row per case under its most serious reaction; blinded cases read blinded in the arm column until an unblinding fact exists."
+/>
+
+<Shot
+  src={dsurSummary}
+  alt="The cumulative SAE summary: counts of events, cases, reactions, and fatal or life-threatening events by study, product, system organ class, and arm."
+  caption="Both tables copy as tab-separated text for the DSUR document."
+/>
+
+<Shot
+  src={audit}
+  alt="The Audit page: tiles reading audit chain verified, the number of chained events, and zero signature hash mismatches; a signature-integrity table comparing each signed hash with the current hash; and the recent event trail."
+  caption="Every write is an append-only, hash-chained audit row written by database triggers. The chain is replayed on demand and every signature's version hash is recomputed on every read."
+/>
+
+<Shot
+  src={adminRules}
+  alt="Admin, Reporting rules: each rule with its citation, destination, scope, the predicate it applies to in prose, its clock in days, what satisfies it, and its effective dates; an End today action per rule and a Resync obligations button."
+  caption="Rules are rows. The seeded ones cover FDA IND safety reports, EU SUSARs, and investigator and IRB notifications; a deploying organization adds its own destinations and rules against its own verified texts."
+/>
+
+<Shot
+  src={adminRsi}
+  alt="Admin, Products and RSI: each product with its dated reference-safety-information versions and their listed Preferred Terms, an Add RSI version button, and an End today action."
+  caption="Expectedness on every event is derived from these dated versions by onset date, so keeping them current is what keeps the clocks right."
+/>
+
+## What the record can produce
+
+The reminders digest, exactly as the seeded study's team would receive it by email on the
+day the screenshots were generated:
+
+<Code code={digest} lang="text" title="digest-CORC-2201.txt" frame="terminal" wrap />
+
+<Shot
+  src={medwatch}
+  alt="Page one of Form FDA 3500A rendered from US-CORC-2026-0001, with the version hash in the footer."
+  caption="Form FDA 3500A rendered from the same approved version, transcribed from the official form's field list."
+/>
+
+The E2B(R3)-shaped export of the same version, keyed by E2B(R3) element IDs. It is JSON,
+not schema-validated XML: schema-valid XML waits until the ICH schema package is in the
+verified source library.
+
+<Code
+  code={`${e2b.split("\n").slice(0, 34).join("\n")}\n  …`}
+  lang="json"
+  title="e2b-US-CORC-2026-0001.json (first lines)"
+/>
+
+<details>
+<summary>The full export</summary>
+
+<Code code={e2b} lang="json" title="e2b-US-CORC-2026-0001.json" />
+
+</details>
+
+## Not pictured
+
+There is no gateway transmission, no WHODrug coding of concomitant medications, no
+schema-valid E2B(R3) XML, no SAE reconciliation against the EDC, and no QC step distinct
+from medical review. Which of those matter for your engagement is what the
+[fit assessment](/pv-core/evaluate/fit/) is for; the [roadmap](/pv-core/roadmap/) says how
+far each one is.

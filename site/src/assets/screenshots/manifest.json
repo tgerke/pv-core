@@ -1,0 +1,326 @@
+{
+  "admin-destinations.webp": {
+    "persona": "admin",
+    "url": "/admin",
+    "kind": "section",
+    "note": "Admin › Destinations"
+  },
+  "admin-dictionaries.webp": {
+    "persona": "admin",
+    "url": "/admin",
+    "kind": "section",
+    "note": "Admin › Dictionaries"
+  },
+  "admin-people-grants.webp": {
+    "persona": "admin",
+    "url": "/admin",
+    "kind": "section",
+    "note": "Admin › People & grants"
+  },
+  "admin-products-rsi.webp": {
+    "persona": "admin",
+    "url": "/admin",
+    "kind": "section",
+    "note": "Admin › Products & RSI"
+  },
+  "admin-reporting-rules.webp": {
+    "persona": "admin",
+    "url": "/admin",
+    "kind": "section",
+    "note": "Admin › Reporting rules"
+  },
+  "admin-sites.webp": {
+    "persona": "admin",
+    "url": "/admin",
+    "kind": "section",
+    "note": "Admin › Sites"
+  },
+  "admin-studies.webp": {
+    "persona": "admin",
+    "url": "/admin",
+    "kind": "section",
+    "note": "Admin › Studies"
+  },
+  "api-docs.webp": {
+    "persona": "n/a",
+    "url": "<api>/docs",
+    "kind": "page",
+    "note": "the interactive API reference"
+  },
+  "assessments-tab.webp": {
+    "persona": "admin",
+    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "kind": "section",
+    "note": "the drug × event × assessor grid"
+  },
+  "attachments-card.webp": {
+    "persona": "admin",
+    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "kind": "section",
+    "note": "content-addressed source documents"
+  },
+  "audit-trail-card.webp": {
+    "persona": "admin",
+    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "kind": "section",
+    "note": "hash-chained rows, one 'what changed' expanded"
+  },
+  "audit.webp": {
+    "persona": "admin",
+    "url": "/audit",
+    "kind": "page",
+    "note": "chain verification, signature integrity, recent events"
+  },
+  "case-1-approved.webp": {
+    "persona": "admin",
+    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "kind": "page",
+    "note": "approved, locked, 7-day clocks due in three days"
+  },
+  "case-2-medical-review.webp": {
+    "persona": "admin",
+    "url": "/cases/6f7153cc-82a1-4d6b-a8f8-3e6769017db3",
+    "kind": "page",
+    "note": "medical review, 15-day clocks overdue"
+  },
+  "case-4-serious-expected.webp": {
+    "persona": "admin",
+    "url": "/cases/25c8dbc5-334e-4e84-b8e5-4acaa22c26ee",
+    "kind": "page",
+    "note": "serious but expected: no clock"
+  },
+  "case-5-data-entry.webp": {
+    "persona": "admin",
+    "url": "/cases/2530c716-96f0-4efd-9acb-9fe8fe00af82",
+    "kind": "page",
+    "note": "data entry, non-serious, sponsor causality unassessed"
+  },
+  "case-6-follow-up-v2.webp": {
+    "persona": "admin",
+    "url": "/cases/a1e60030-5a4d-40fb-bee5-4626ae4e89ed",
+    "kind": "page",
+    "note": "v2 follow-up open, v1 locked and submitted"
+  },
+  "case-7-nullified.webp": {
+    "persona": "admin",
+    "url": "/cases/d9027e63-df13-42e2-bdfc-8c330324a671",
+    "kind": "page",
+    "note": "a nullified duplicate"
+  },
+  "case-8-waived-placebo.webp": {
+    "persona": "admin",
+    "url": "/cases/3e81b65d-0080-48e2-8bb9-d1a2aad01db7",
+    "kind": "page",
+    "note": "unblinded to placebo, obligations waived"
+  },
+  "case-9-intake.webp": {
+    "persona": "admin",
+    "url": "/cases/c5ad8be4-12c3-4afa-b655-f9a5c390c01d",
+    "kind": "page",
+    "note": "an intake item from the EDC, below the minimum criteria"
+  },
+  "dialog-nullify.webp": {
+    "persona": "admin",
+    "url": "/cases/2530c716-96f0-4efd-9acb-9fe8fe00af82",
+    "kind": "dialog",
+    "note": "the nullification dialog, never confirmed"
+  },
+  "dialog-open-follow-up.webp": {
+    "persona": "admin",
+    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "kind": "dialog",
+    "note": "the follow-up dialog, never confirmed"
+  },
+  "dialog-record-submission.webp": {
+    "persona": "admin",
+    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "kind": "dialog",
+    "note": "destination, kind, format; never confirmed"
+  },
+  "dialog-record-unblinding.webp": {
+    "persona": "admin",
+    "url": "/cases/6f7153cc-82a1-4d6b-a8f8-3e6769017db3",
+    "kind": "dialog",
+    "note": "the unblinding fact dialog, never confirmed"
+  },
+  "dialog-sign-medical-review.webp": {
+    "persona": "reviewer",
+    "url": "/cases/6f7153cc-82a1-4d6b-a8f8-3e6769017db3",
+    "kind": "dialog",
+    "note": "signing asks for re-authentication; never confirmed"
+  },
+  "drugs-tab.webp": {
+    "persona": "admin",
+    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "kind": "section",
+    "note": "the Drugs section, study product marked blinded"
+  },
+  "dsur-sae-summary.webp": {
+    "persona": "admin",
+    "url": "/dsur",
+    "kind": "section",
+    "note": "SAE tabulation by SOC and arm"
+  },
+  "dsur-sar-line-listing.webp": {
+    "persona": "admin",
+    "url": "/dsur",
+    "kind": "section",
+    "note": "the E2F line listing"
+  },
+  "dsur.webp": {
+    "persona": "admin",
+    "url": "/dsur",
+    "kind": "page",
+    "note": "the DSUR page"
+  },
+  "events-tab-editing-typeahead.webp": {
+    "persona": "admin",
+    "url": "/cases/2530c716-96f0-4efd-9acb-9fe8fe00af82",
+    "kind": "section",
+    "note": "editing an event: the MedDRA typeahead over the loaded dictionary"
+  },
+  "events-tab.webp": {
+    "persona": "admin",
+    "url": "/cases/6f7153cc-82a1-4d6b-a8f8-3e6769017db3",
+    "kind": "section",
+    "note": "coded event with seriousness, expectedness, causality"
+  },
+  "facts-card.webp": {
+    "persona": "admin",
+    "url": "/cases/3e81b65d-0080-48e2-8bb9-d1a2aad01db7",
+    "kind": "section",
+    "note": "the unblinding fact with its source reference"
+  },
+  "generated/cioms1-US-CORC-2026-0001.png": {
+    "source": "GET /case-versions/{US-CORC-2026-0001 v1}/cioms1.pdf, page 1"
+  },
+  "generated/digest-CORC-2201.txt": {
+    "source": "GET /studies/{CORC-2201}/digest"
+  },
+  "generated/e2b-US-CORC-2026-0001.json": {
+    "source": "GET /case-versions/{US-CORC-2026-0001 v1}/e2b.json"
+  },
+  "generated/medwatch-3500a-US-CORC-2026-0001.png": {
+    "source": "GET /case-versions/{US-CORC-2026-0001 v1}/medwatch-3500a.pdf, page 1"
+  },
+  "new-case-empty.webp": {
+    "persona": "admin",
+    "url": "/cases/new",
+    "kind": "page",
+    "note": "the empty new-case form with the Valid ICSR rail"
+  },
+  "new-case-partial.webp": {
+    "persona": "admin",
+    "url": "/cases/new",
+    "kind": "page",
+    "note": "two of four criteria met: Save as intake"
+  },
+  "new-case-valid.webp": {
+    "persona": "admin",
+    "url": "/cases/new",
+    "kind": "page",
+    "note": "all four criteria met: Create case (never clicked)"
+  },
+  "obligations-card.webp": {
+    "persona": "admin",
+    "url": "/cases/6f7153cc-82a1-4d6b-a8f8-3e6769017db3",
+    "kind": "section",
+    "note": "three overdue obligations"
+  },
+  "patient-tab.webp": {
+    "persona": "admin",
+    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "kind": "section",
+    "note": "the Patient section"
+  },
+  "queue-filter-medical-review.webp": {
+    "persona": "admin",
+    "url": "/?state=medical_review",
+    "kind": "page",
+    "note": "the queue filtered to medical review"
+  },
+  "queue-ingest.webp": {
+    "persona": "ingest",
+    "url": "/",
+    "kind": "page",
+    "note": "the enter-only intake identity"
+  },
+  "queue-processor.webp": {
+    "persona": "processor",
+    "url": "/",
+    "kind": "page",
+    "note": "the queue as the processor persona"
+  },
+  "queue-readonly.webp": {
+    "persona": "readonly",
+    "url": "/",
+    "kind": "page",
+    "note": "the queue as the readonly persona"
+  },
+  "queue-reviewer.webp": {
+    "persona": "reviewer",
+    "url": "/",
+    "kind": "page",
+    "note": "the queue as the reviewer persona"
+  },
+  "queue.webp": {
+    "persona": "admin",
+    "url": "/",
+    "kind": "page",
+    "note": "the case queue, all studies, admin"
+  },
+  "reporting-overdue.webp": {
+    "persona": "admin",
+    "url": "/reporting?status=overdue",
+    "kind": "page",
+    "note": "the reporting page filtered to overdue"
+  },
+  "reporting.webp": {
+    "persona": "admin",
+    "url": "/reporting",
+    "kind": "page",
+    "note": "expected submissions across studies, grouped by due date"
+  },
+  "rule-matches-card.webp": {
+    "persona": "admin",
+    "url": "/cases/6f7153cc-82a1-4d6b-a8f8-3e6769017db3",
+    "kind": "section",
+    "note": "why each rule applies"
+  },
+  "signatures-card.webp": {
+    "persona": "admin",
+    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "kind": "section",
+    "note": "medical review and approval, hash matches"
+  },
+  "submission-compliance.webp": {
+    "persona": "admin",
+    "url": "/",
+    "kind": "section",
+    "note": "on-time metrics per study and destination"
+  },
+  "submissions-card.webp": {
+    "persona": "admin",
+    "url": "/cases/a1e60030-5a4d-40fb-bee5-4626ae4e89ed",
+    "kind": "section",
+    "note": "three submissions of v1, one acknowledged"
+  },
+  "submissions-record-ack.webp": {
+    "persona": "admin",
+    "url": "/cases/a1e60030-5a4d-40fb-bee5-4626ae4e89ed",
+    "kind": "section",
+    "note": "recording an acknowledgement, never saved"
+  },
+  "version-card-v1.webp": {
+    "persona": "admin",
+    "url": "/cases/a1e60030-5a4d-40fb-bee5-4626ae4e89ed",
+    "kind": "section",
+    "note": "the locked initial version"
+  },
+  "version-card.webp": {
+    "persona": "admin",
+    "url": "/cases/a1e60030-5a4d-40fb-bee5-4626ae4e89ed",
+    "kind": "section",
+    "note": "version toggles and the E2B JSON export"
+  }
+}

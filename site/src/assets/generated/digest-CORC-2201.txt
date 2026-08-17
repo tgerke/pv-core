@@ -1,0 +1,21 @@
+CORC-2201: Randomized, double-blind, placebo-controlled Phase 2 study of CORC-101 plus androgen receptor blockade in metastatic castration-resistant prostate cancer
+Cascade Oncology Research Consortium. Safety digest for 2026-08-17. Every status below is
+derived from the live record at send time; the queue always has the current view.
+
+Overdue submissions (3)
+  - US-CORC-2026-0002: EU CTR SUSAR 15-day to EudraVigilance (clinical trial module), due 2026-08-12 (5 days overdue)
+  - US-CORC-2026-0002: FDA IND 15-day: serious and unexpected suspected adverse reaction to FDA CDER (IND safety reports), due 2026-08-12 (5 days overdue)
+  - US-CORC-2026-0002: Investigator SUSAR notification letter to Investigators, CORC-2201, due 2026-08-12 (5 days overdue)
+
+Due within the warning window (2)
+  - US-CORC-2026-0001: EU CTR SUSAR 7-day: fatal or life-threatening to EudraVigilance (clinical trial module), due 2026-08-20 (3 days left)
+  - US-CORC-2026-0001: FDA IND 7-day: fatal or life-threatening unexpected suspected adverse reaction to FDA CDER (IND safety reports), due 2026-08-20 (3 days left)
+
+Intake items not yet a valid ICSR (1)
+  - US-CORC-2026-0009: received 2026-08-16, minimum criteria not met
+
+In medical review for more than 3 days (1)
+  - US-CORC-2026-0002: 15d clock, SUSAR
+
+Standing counts: 6 cases; 10 open obligations; 2 submitted awaiting acknowledgement; 1 acknowledged; on-time rate 50%.
+Audit chain verified: 254 events.

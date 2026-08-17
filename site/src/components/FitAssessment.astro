@@ -1,0 +1,384 @@
+---
+// The readiness table from roadmap.md (a mirror of docs/06-roadmap.md), parsed
+// at build time, rendered as a checklist. Verdicts are never written here; if
+// the heading or table moves, the build fails on purpose (fix the regex, do not
+// copy rows). The client script keeps ticks and notes in localStorage and turns
+// them into a summary the reader can copy into an email.
+import { Badge } from "@astrojs/starlight/components";
+import raw from "../content/docs/roadmap.md?raw";
+
+const HEADING = /^## What a .*engagement needs\s*$/m;
+const m = HEADING.exec(raw);
+if (!m) throw new Error("FitAssessment: roadmap readiness heading not found; the roadmap moved");
+const table: string[] = [];
+for (const line of raw.slice(m.index + m[0].length).split("\n")) {
+  const t = line.trim();
+  if (t.startsWith("|")) table.push(t);
+  else if (table.length) break;
+}
+if (table.length < 4) throw new Error("FitAssessment: roadmap readiness table not found");
+
+const cells = (line: string) =>
+  line
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((s) => s.trim());
+const VERDICTS = {
+  Yes: "success",
+  Partly: "caution",
+  No: "danger",
+  Boundary: "note",
+  "See note": "default",
+} as const;
+type Verdict = keyof typeof VERDICTS;
+const rows = table
+  .slice(2)
+  .map(cells)
+  .filter((r) => r.length >= 2)
+  .map(([need, after], n) => {
+    const v = /^(Yes|No|Partly|Boundary)\b/.exec(after)?.[1] as Verdict | undefined;
+    // The chip carries the verdict, so the text drops its leading "Yes." / "No." / "Partly."
+    const rest = v ? after.replace(/^(Yes|No|Partly|Boundary)[.,;:]?\s*/, "") : after;
+    return {
+      n,
+      need,
+      after: rest || after,
+      verdict: (v ?? "See note") as Verdict,
+      key: need
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "")
+        .slice(0, 60),
+    };
+  });
+const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const inline = (s: string) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const source = new URL(`${base}/roadmap/`, Astro.site ?? "https://tgerke.github.io/").href;
+const built = new Date().toISOString().slice(0, 10);
+const counts = rows.reduce(
+  (acc, r) => Object.assign(acc, { [r.verdict]: (acc[r.verdict] ?? 0) + 1 }),
+  {} as Record<string, number>,
+);
+---
+
+<div class="pv-fit" data-fit data-source={source} data-built={built}>
+  <p class="pv-fit__lede">
+    {`${rows.length} needs from the roadmap's readiness table (${counts.Yes ?? 0} met, ${counts.Partly ?? 0} partly, ${counts.No ?? 0} not yet, ${counts.Boundary ?? 0} deliberate boundaries). Tick the ones your engagement has; the summary below fills in as you go.`}
+  </p>
+  <table class="pv-fit__table">
+    <thead>
+      <tr>
+        <th scope="col"><span class="sr-only">We need this</span></th>
+        <th scope="col">A CRO engagement needs</th>
+        <th scope="col">After this pass</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        rows.map((r) => (
+          <tr data-verdict={r.verdict}>
+            <td class="pv-fit__check">
+              <input
+                type="checkbox"
+                data-fit-check
+                value={r.key}
+                aria-labelledby={`fit-need-${r.n}`}
+              />
+            </td>
+            <td id={`fit-need-${r.n}`} data-need set:html={inline(r.need)} />
+            <td>
+              <Badge text={r.verdict} variant={VERDICTS[r.verdict]} size="small" />{" "}
+              <span data-after set:html={inline(r.after)} />
+              {r.verdict === "Boundary" && (
+                <>
+                  {" "}
+                  <a href={`${base}/roadmap/#deliberate-boundaries-not-gaps`}>why</a>
+                </>
+              )}
+            </td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+
+  <div class="pv-fit__summary not-content" data-fit-summary data-pagefind-ignore hidden>
+    <h3 class="pv-fit__heading">Your summary</h3>
+    <p data-fit-counts></p>
+    <div class="pv-fit__lists">
+      <div>
+        <p class="pv-fit__label">Gaps and partial fits</p>
+        <ul data-fit-unmet></ul>
+      </div>
+      <div>
+        <p class="pv-fit__label">Met</p>
+        <ul data-fit-met></ul>
+      </div>
+    </div>
+    <label class="pv-fit__notes">
+      <span class="pv-fit__label">Notes for the pv-core team</span>
+      <textarea
+        data-fit-notes
+        rows="6"
+        placeholder="For each gap: the workflow or screen it concerns, who does it and how often, the regulator or destination involved, how you handle it today, and what done would look like."
+      ></textarea>
+    </label>
+    <div class="pv-fit__actions">
+      <button type="button" data-fit-copy>Copy summary</button>
+      <button type="button" class="pv-fit__secondary" data-fit-clear>Clear</button>
+      <span class="pv-fit__status" data-fit-status aria-live="polite"></span>
+    </div>
+    <label class="pv-fit__out">
+      <span class="pv-fit__label">As text</span>
+      <textarea data-fit-out readonly rows="10" aria-label="The summary as plain text"></textarea>
+    </label>
+  </div>
+</div>
+
+<script>
+  const KEY = "pv-fit:v1";
+  const PROMPTS = [
+    "Workflow or screen it concerns:",
+    "Who does it (role) and how often:",
+    "Regulator or destination involved:",
+    "How you handle it today:",
+    "What done would look like:",
+  ];
+  const root = document.querySelector<HTMLElement>("[data-fit]");
+  if (root) {
+    const q = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel) as T;
+    const rows = [...root.querySelectorAll<HTMLTableRowElement>("tbody tr")].map((tr) => ({
+      box: tr.querySelector<HTMLInputElement>("[data-fit-check]") as HTMLInputElement,
+      verdict: tr.dataset.verdict ?? "See note",
+      need: (tr.querySelector("[data-need]")?.textContent ?? "").trim(),
+      after: (tr.querySelector("[data-after]")?.textContent ?? "").trim(),
+    }));
+    const summary = q("[data-fit-summary]");
+    const counts = q("[data-fit-counts]");
+    const unmet = q("[data-fit-unmet]");
+    const met = q("[data-fit-met]");
+    const notes = q<HTMLTextAreaElement>("[data-fit-notes]");
+    const copy = q<HTMLButtonElement>("[data-fit-copy]");
+    const clear = q<HTMLButtonElement>("[data-fit-clear]");
+    const status = q("[data-fit-status]");
+    const out = q<HTMLTextAreaElement>("[data-fit-out]");
+
+    let saved: { checked?: string[]; notes?: string } = {};
+    try {
+      saved = JSON.parse(localStorage.getItem(KEY) ?? "{}");
+    } catch {}
+    const checked = new Set(saved.checked ?? []);
+    for (const r of rows) r.box.checked = checked.has(r.box.value);
+    notes.value = saved.notes ?? "";
+
+    const selected = () => rows.filter((r) => r.box.checked);
+    const open = (r: (typeof rows)[number]) => r.verdict !== "Yes";
+    const item = (r: (typeof rows)[number]) => `- ${r.need}: ${r.verdict}. ${r.after}`;
+
+    function persist() {
+      try {
+        localStorage.setItem(
+          KEY,
+          JSON.stringify({ checked: selected().map((r) => r.box.value), notes: notes.value }),
+        );
+      } catch {}
+    }
+    function tally(sel: typeof rows) {
+      const n = (v: string) => sel.filter((r) => r.verdict === v).length;
+      return `${sel.length} ticked: ${n("Yes")} met, ${n("Partly")} partly, ${n("No")} not yet, ${n("Boundary")} boundaries, ${n("See note")} see note`;
+    }
+    function summaryText() {
+      const sel = selected();
+      const lines = [
+        `pv-core fit assessment (${root!.dataset.built}; verdicts from ${root!.dataset.source})`,
+        tally(sel),
+        "",
+        "Gaps and partial fits:",
+        ...(sel.filter(open).map(item).length ? sel.filter(open).map(item) : ["- none"]),
+        "",
+        "Met:",
+        ...(sel.filter((r) => !open(r)).map(item).length
+          ? sel.filter((r) => !open(r)).map(item)
+          : ["- none"]),
+        "",
+        "Notes for the pv-core team:",
+        ...(notes.value.trim() ? [notes.value.trim()] : PROMPTS.map((p) => `- ${p} `)),
+        "",
+      ];
+      return lines.join("\n");
+    }
+    function fill(list: HTMLElement, items: typeof rows) {
+      list.replaceChildren(
+        ...(items.length
+          ? items.map((r) => {
+              const li = document.createElement("li");
+              li.textContent = `${r.need}: ${r.verdict}`;
+              return li;
+            })
+          : [Object.assign(document.createElement("li"), { textContent: "none" })]),
+      );
+    }
+    function update() {
+      const sel = selected();
+      summary.hidden = sel.length === 0;
+      counts.textContent = tally(sel);
+      fill(unmet, sel.filter(open));
+      fill(met, sel.filter((r) => !open(r)));
+      out.value = summaryText();
+      persist();
+    }
+    async function copyText(text: string) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.append(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        ta.remove();
+        return ok;
+      }
+    }
+
+    for (const r of rows) r.box.addEventListener("change", update);
+    notes.addEventListener("input", () => {
+      out.value = summaryText();
+      persist();
+    });
+    copy.addEventListener("click", async () => {
+      const ok = await copyText(out.value);
+      if (!ok) {
+        out.focus();
+        out.select();
+      }
+      status.textContent = ok
+        ? "Copied. Paste it into your reply."
+        : "Copy failed; the text below is selected, copy it by hand.";
+      setTimeout(() => (status.textContent = ""), 4000);
+    });
+    clear.addEventListener("click", () => {
+      for (const r of rows) r.box.checked = false;
+      notes.value = "";
+      update();
+    });
+    update();
+  }
+</script>
+
+<style is:global>
+  .pv-fit__lede {
+    color: var(--sl-color-gray-2);
+  }
+  .pv-fit__table th:first-child,
+  .pv-fit__table td.pv-fit__check {
+    width: 2.5rem;
+    text-align: center;
+  }
+  .pv-fit__table input[type="checkbox"] {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--sl-color-accent);
+    cursor: pointer;
+  }
+  .pv-fit__table td {
+    vertical-align: top;
+  }
+  .pv-fit__table [data-need] {
+    font-weight: 500;
+  }
+  .pv-fit__summary {
+    margin-top: 1.5rem;
+    padding: 1rem 1.25rem 1.25rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-left: 4px solid var(--sl-color-accent);
+    border-radius: 0.6rem;
+    background: var(--pv-surface);
+  }
+  .pv-fit__heading {
+    margin: 0 0 0.35rem;
+    font-size: var(--sl-text-lg);
+    font-weight: 600;
+  }
+  .pv-fit__summary p {
+    margin: 0;
+    color: var(--sl-color-gray-2);
+    font-size: var(--sl-text-sm);
+  }
+  .pv-fit__lists {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 0.75rem 1.5rem;
+    margin-top: 0.9rem;
+  }
+  .pv-fit__lists ul {
+    margin: 0.25rem 0 0;
+    padding-left: 1.1rem;
+    font-size: var(--sl-text-sm);
+    line-height: 1.5;
+  }
+  .pv-fit__label {
+    display: block;
+    font-size: var(--sl-text-xs);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--sl-color-gray-3);
+  }
+  .pv-fit__notes,
+  .pv-fit__out {
+    display: block;
+    margin-top: 1rem;
+  }
+  .pv-fit__out textarea {
+    font-family: var(--__sl-font-mono);
+    font-size: var(--sl-text-xs);
+  }
+  .pv-fit__notes textarea,
+  .pv-fit__out textarea {
+    display: block;
+    width: 100%;
+    margin-top: 0.35rem;
+    padding: 0.5rem 0.65rem;
+    font: inherit;
+    font-size: var(--sl-text-sm);
+    line-height: 1.5;
+    color: var(--sl-color-white);
+    background: var(--sl-color-bg);
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.4rem;
+    resize: vertical;
+  }
+  .pv-fit__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    margin-top: 0.9rem;
+  }
+  .pv-fit__actions button {
+    font: inherit;
+    font-size: var(--sl-text-sm);
+    padding: 0.4rem 0.9rem;
+    border-radius: 0.4rem;
+    border: 1px solid var(--sl-color-accent);
+    background: var(--sl-color-accent);
+    color: #ffffff;
+    cursor: pointer;
+  }
+  .pv-fit__actions button.pv-fit__secondary {
+    background: transparent;
+    border-color: var(--sl-color-gray-5);
+    color: var(--sl-color-white);
+  }
+  .pv-fit__status {
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-gray-3);
+  }
+</style>

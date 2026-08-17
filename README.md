@@ -10,6 +10,10 @@ by when, and what is overdue are queries, not a tracker spreadsheet.
 
 The public API is the product; the web UI is its first customer.
 
+**Docs:** https://tgerke.github.io/pv-core, with a screenshot tour of every screen and a fit
+assessment for teams evaluating it (start at
+[Evaluating pv-core](https://tgerke.github.io/pv-core/evaluate/)).
+
 ## Why
 
 Incumbent safety databases are heavy workflow engines priced for pharma. Academic
@@ -25,7 +29,7 @@ rebuilding the answer by hand. Here they are one `GET` (or one `SELECT`). See
 | --- | --- |
 | `docs/` | Design docs: vision, data model, compliance mapping, API guide, deployment, roadmap + ADR log |
 | `docs/validation/` | Generated IQ/OQ reports and requirement→test traceability matrix |
-| `site/` | Astro Starlight docs site: getting started, user guide, cookbook, compliance, validation |
+| `site/` | Astro Starlight docs site: getting started, evaluator tour and fit assessment, user guide with screenshots, cookbook, compliance, validation |
 | `packages/db` | Postgres schema (Drizzle), migrations, audit-trail enforcement, blob storage, seed, MedDRA importer |
 | `packages/core` | Domain logic: audited mutations, case lifecycle, reporting-obligation engine, renderers |
 | `apps/api` | OpenAPI 3.1 REST API (Hono), spec at `/openapi.json`, docs at `/docs` |
@@ -41,7 +45,7 @@ cp .env.example .env
 pnpm install
 pnpm db:up        # Postgres 16 (:5436), MinIO, mailpit in Docker
 pnpm db:migrate
-pnpm db:seed      # two fictional trials, nine cases at every point of the clock
+pnpm db:seed      # two sponsors, three fictional trials, ten cases at every point of the clock
 pnpm dev          # API on :8789, web on :5176
 ```
 
@@ -54,6 +58,7 @@ pnpm check                  # lint + typecheck + test
 pnpm validation:iq          # installation qualification against the live env
 pnpm validation:artifacts   # OQ report + requirement traceability matrix
 pnpm digest -- --dry-run    # the reminders digest, printed instead of mailed
+pnpm docs:screenshots       # regenerate the docs-site screenshots from a fresh seed
 ```
 
 ## Status

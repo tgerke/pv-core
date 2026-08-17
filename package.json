@@ -22,7 +22,8 @@
     "check": "pnpm lint && pnpm typecheck && pnpm test",
     "validation:iq": "pnpm --filter @pv-core/db iq",
     "validation:artifacts": "tsx tools/validation-artifacts.ts",
-    "digest": "tsx tools/digest.ts"
+    "digest": "tsx tools/digest.ts",
+    "docs:screenshots": "node tools/screenshots.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",

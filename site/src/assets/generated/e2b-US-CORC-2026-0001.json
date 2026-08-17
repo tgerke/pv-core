@@ -1,0 +1,152 @@
+{
+  "meta": {
+    "format": "pv-core/e2b-r3-json",
+    "schema_validated": false,
+    "generated_at": "2026-08-17T18:38:28.082Z",
+    "case_version_id": "3160cc33-9a76-464b-8eef-0942dcc5876a",
+    "version_number": 1,
+    "version_sha256": "caa716dd9ebcaeca64f3acea5ed8df362b930be3a5f21eaa8ba4b92b647b7c68",
+    "dictionary": {
+      "version": "demo-illustrative",
+      "is_demo_subset": true
+    }
+  },
+  "C.1.1": "US-CORC-2026-0001",
+  "C.1.2": "2026-08-17T18:38:28.082Z",
+  "C.1.3": 2,
+  "C.1.4": "2026-08-13",
+  "C.1.5": "2026-08-13",
+  "C.1.7": true,
+  "C.1.8.1": "US-CASCADE-CORC-000001",
+  "C.1.8.2": 2,
+  "C.2.r": [
+    {
+      "C.2.r.1.2": "Alan",
+      "C.2.r.1.4": "Brooks",
+      "C.2.r.2.1": "Memorial Cancer Institute",
+      "C.2.r.3": "US",
+      "C.2.r.4": 1,
+      "C.2.r.5": 1
+    }
+  ],
+  "C.3.1": 1,
+  "C.3.2": "Cascade Oncology Research Consortium",
+  "C.5.1.r": [
+    {
+      "C.5.1.r.1": "123456",
+      "C.5.1.r.2": "US"
+    },
+    {
+      "C.5.1.r.1": "2025-512345-11-00",
+      "C.5.1.r.2": "EU"
+    }
+  ],
+  "C.5.2": "Randomized, double-blind, placebo-controlled Phase 2 study of CORC-101 plus androgen receptor blockade in metastatic castration-resistant prostate cancer",
+  "C.5.3": "CORC-2201",
+  "C.5.4": 1,
+  "D": {
+    "D.1": "RH",
+    "D.1.1.4": "2201-001-007",
+    "D.2.2a": 68,
+    "D.2.2b": "a",
+    "D.3": null,
+    "D.4": null,
+    "D.5": 1,
+    "D.7.2": null,
+    "D.9.1": null
+  },
+  "E.i": [
+    {
+      "E.i.1.1a": "Myelodysplastic syndrome, fatal",
+      "E.i.2.1a": "demo-illustrative",
+      "E.i.2.1b": "91000005",
+      "E.i.3.2a": true,
+      "E.i.3.2b": true,
+      "E.i.3.2c": true,
+      "E.i.3.2d": false,
+      "E.i.3.2e": false,
+      "E.i.3.2f": false,
+      "E.i.4": "2026-08-08",
+      "E.i.5": "2026-08-12",
+      "E.i.7": 5,
+      "E.i.8": null,
+      "E.i.9": "US"
+    }
+  ],
+  "F.r": [],
+  "G.k": [
+    {
+      "G.k.1": 1,
+      "G.k.2.2": "CORC-101 300 mg / placebo (blinded)",
+      "G.k.2.5": true,
+      "G.k.4.r": [
+        {
+          "G.k.4.r.1a": null,
+          "G.k.4.r.1b": null,
+          "G.k.4.r.4": "2026-02-08",
+          "G.k.4.r.5": null,
+          "G.k.4.r.7": null,
+          "G.k.4.r.8": "300 mg twice daily",
+          "G.k.4.r.10": "oral"
+        }
+      ],
+      "G.k.7.r": [
+        {
+          "G.k.7.r.1": "Prostate cancer metastatic",
+          "G.k.7.r.2": null
+        }
+      ],
+      "G.k.8": null,
+      "G.k.9.i": [
+        {
+          "G.k.9.i.1": "E.1",
+          "G.k.9.i.2.r": [
+            {
+              "G.k.9.i.2.r.1": "reporter",
+              "G.k.9.i.2.r.2": "Investigator judgment",
+              "G.k.9.i.2.r.3": "Related",
+              "reasonable_possibility": true
+            }
+          ],
+          "G.k.9.i.4": null
+        },
+        {
+          "G.k.9.i.1": "E.1",
+          "G.k.9.i.2.r": [
+            {
+              "G.k.9.i.2.r.1": "sponsor",
+              "G.k.9.i.2.r.2": "Sponsor medical review",
+              "G.k.9.i.2.r.3": "Reasonable possibility",
+              "reasonable_possibility": true
+            }
+          ],
+          "G.k.9.i.4": null
+        }
+      ]
+    },
+    {
+      "G.k.1": 2,
+      "G.k.2.2": "Enzalutamide",
+      "G.k.2.5": false,
+      "G.k.4.r": [
+        {
+          "G.k.4.r.1a": null,
+          "G.k.4.r.1b": null,
+          "G.k.4.r.4": "2026-02-08",
+          "G.k.4.r.5": null,
+          "G.k.4.r.7": null,
+          "G.k.4.r.8": "160 mg daily",
+          "G.k.4.r.10": "oral"
+        }
+      ],
+      "G.k.7.r": [],
+      "G.k.8": null,
+      "G.k.9.i": []
+    }
+  ],
+  "H": {
+    "H.1": "A 68-year-old man with mCRPC, randomized 190 days before the event, developed progressive pancytopenia; bone marrow biopsy on day -9 confirmed myelodysplastic syndrome with excess blasts. He was hospitalized, deteriorated with neutropenic sepsis, and died on day -5. The investigator considers the event related to study treatment. Study drug had been discontinued at hospitalization.",
+    "H.2": null,
+    "H.4": null
+  }
+}

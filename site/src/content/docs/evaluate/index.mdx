@@ -1,0 +1,100 @@
+---
+title: "Evaluating pv-core"
+description: "What a clinical-operations lead should look at to decide whether pv-core fits a safety-database engagement, and where its gaps are."
+sidebar:
+  label: Overview
+---
+
+import { LinkCard, CardGrid } from "@astrojs/starlight/components";
+import Shot from "../../../components/Shot.astro";
+import queue from "../../../assets/screenshots/queue.webp";
+
+This section is for the person deciding whether pv-core could run a sponsor's safety
+database: a head of clinical operations or pharmacovigilance at a CRO, a sponsor's safety
+lead, or the QA person they bring along. It shows the product as it is today, screen by
+screen, and is honest about what is not there yet.
+
+pv-core is a pharmacovigilance case-management system for the sponsor and CRO seat,
+clinical-trial first. A CRO runs one instance and hosts several sponsors on it, with access
+scoped to a sponsor organization or to a single study. Every case is an ICH E2B(R3)-shaped
+record with versions that lock on signature; reporting obligations are materialized from
+rules and their status is derived on every read; and 21 CFR Part 11 is a property of the
+schema, not a feature toggle.
+
+<Shot
+  src={queue}
+  alt="The case queue as the CRO administrator sees it: ten cases across two sponsors, overdue clocks first, with stat tiles for overdue obligations, cases due within three days, intake items, and cases awaiting medical review."
+  caption="The queue is the morning view. Nothing here is a status somebody typed; every chip and every due date is computed from the record when the page loads."
+/>
+
+## The demo you will be shown
+
+Every screenshot on this site, and every screen share, uses the same seeded demo: two
+sponsors, three trials, and ten cases sitting at every point of the regulatory clock. The
+names, products, and subjects are invented, the dictionary is a labeled illustrative subset
+rather than MedDRA, and the dates are relative to the day the demo was seeded, so the
+clocks always read the same way.
+
+| Case | What it shows | Where to look |
+| --- | --- | --- |
+| US-CORC-2026-0001 | A fatal, unexpected, related event: 7-day clocks due in three days, approved and signed, unblinded to the study drug | [Tour, step 10](/pv-core/evaluate/tour/#step-approved) |
+| US-CORC-2026-0002 | 15-day clocks five days overdue while the case waits in medical review; FDA, EU CTR, and investigator-notification rules all fire | [Tour, step 7](/pv-core/evaluate/tour/#step-obligations) |
+| US-CORC-2026-0003 | Submitted to the FDA as E2B(R3) JSON and acknowledged, plus a CIOMS I letter to the IRB; closed | [Clocks and submissions](/pv-core/user-guide/clocks-and-submissions/) |
+| US-CORC-2026-0004 | Serious but expected (listed in the Investigator's Brochure): no clock at all | [Tour, scenarios](/pv-core/evaluate/tour/#scenarios-the-clock-has-to-survive) |
+| US-CORC-2026-0005 | A non-serious event the sponsor has not assessed for causality yet | [Tour, scenarios](/pv-core/evaluate/tour/#scenarios-the-clock-has-to-survive) |
+| US-CORC-2026-0006 | Submitted three ways, then a follow-up with new information restarted a 15-day clock | [Tour, step 14](/pv-core/evaluate/tour/#step-follow-up) |
+| US-CORC-2026-0007 | A duplicate, nullified with a reason and a nullification report on record | [Tour, scenarios](/pv-core/evaluate/tour/#scenarios-the-clock-has-to-survive) |
+| US-CORC-2026-0008 | Unblinded to placebo after the fact; every obligation waived with the reason on record | [Tour, scenarios](/pv-core/evaluate/tour/#scenarios-the-clock-has-to-survive) |
+| US-CORC-2026-0009 | Pushed in by the EDC without a reporter: an intake item, not yet a valid case | [Tour, step 4](/pv-core/evaluate/tour/#step-intake) |
+| US-NLB-2026-0001 | The second sponsor's case, which the first sponsor's staff never see | [Who sees what](/pv-core/evaluate/tour/#who-sees-what) |
+
+## Twenty minutes, in this order
+
+<CardGrid>
+  <LinkCard
+    title="Guided tour"
+    description="A case from intake to acknowledgement in fifteen screens, then the scenarios a clock has to survive."
+    href="/pv-core/evaluate/tour/"
+  />
+  <LinkCard
+    title="Fit assessment"
+    description="Tick what your engagement needs and get a summary of what is met, partly met, or missing, ready to send back."
+    href="/pv-core/evaluate/fit/"
+  />
+  <LinkCard
+    title="User guide"
+    description="The same screens organized by task, for the people who would process cases every day."
+    href="/pv-core/user-guide/"
+  />
+  <LinkCard
+    title="Roadmap and honest gaps"
+    description="What an incumbent safety database gives a team that this does not yet, and which of those are boundaries by design."
+    href="/pv-core/roadmap/"
+  />
+  <LinkCard
+    title="Compliance"
+    description="Requirement by requirement, the mechanism behind each Part 11 and ICH E2 expectation, and what is not claimed."
+    href="/pv-core/compliance/"
+  />
+</CardGrid>
+
+## Things to ask for on a screen share
+
+The demo rewards specific requests. These are the ones that show the most:
+
+- Open a case whose clock is overdue and show why each rule applies to it.
+- Switch to the auditor persona and try to change anything.
+- Open the placebo subject and show the waived obligations and the unblinding fact.
+- Render the CIOMS I form from the approved case and point at the version hash in the footer.
+- Verify the audit chain, then open one audit row and show what changed.
+- Open the same queue as the other sponsor's case processor.
+
+## What it deliberately does not do
+
+Some things incumbents sell are things pv-core has decided not to do: subject-level
+adverse-event capture (the EDC owns it), breaking the blind (the randomization system does;
+pv-core records the fact), gateway transmission to regulators (pv-core produces the files
+and records what was sent), the post-marketing workflow, signal detection, and the
+validation program itself. They are restated on the [roadmap](/pv-core/roadmap/#deliberate-boundaries-not-gaps)
+so that a feature comparison stays clean, and the [fit assessment](/pv-core/evaluate/fit/)
+labels them as boundaries rather than gaps.

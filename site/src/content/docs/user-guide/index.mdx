@@ -1,0 +1,112 @@
+---
+title: "User guide"
+description: "The everyday tasks of a safety team in pv-core, as they look in the app: intake, coding and assessment, the regulatory clock, submissions, DSUR listings, and who sees what."
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+import Shot from "../../../components/Shot.astro";
+import queue from "../../../assets/screenshots/queue.webp";
+import queueFiltered from "../../../assets/screenshots/queue-filter-medical-review.webp";
+import queueProcessor from "../../../assets/screenshots/queue-processor.webp";
+import queueReviewer from "../../../assets/screenshots/queue-reviewer.webp";
+import queueReadonly from "../../../assets/screenshots/queue-readonly.webp";
+import queueIngest from "../../../assets/screenshots/queue-ingest.webp";
+
+This guide is for the people who process safety cases: case processors, safety
+physicians, and the QA and regulatory staff who work with them. It walks through the
+everyday tasks (taking in a serious adverse event, coding and assessing it, watching the
+regulatory clock, recording what was sent, and preparing the DSUR listings) as they look
+in the app, with no code. If you script against the API or query the database directly,
+the [cookbook](/pv-core/cookbook/) covers the same tasks in R and curl. For a narrated
+pass through one case, take the [guided tour](/pv-core/evaluate/tour/) first.
+
+One idea explains most of what you will see: **the app never asks you to update a
+status**. You record facts (a reporter's details arrived, a physician assessed causality,
+a report was sent, a regulator acknowledged it), and every state on every page, including
+whether a case is reportable and when each report is due, is computed from those facts
+each time the page loads. Nothing needs to be remembered, refreshed, or reconciled.
+
+## The pages
+
+<Shot
+  src={queue}
+  alt="The case queue: stat tiles for overdue obligations, cases due within three days, intake items, and cases awaiting medical review; then every case with its study, primary event, expedited class, derived state, next due date, open and overdue counts, and flags."
+  caption="The queue, overdue clocks first. The tiles count what needs attention today."
+/>
+
+- **Queue**: every case you can read, overdue clocks first, with its derived state,
+  expedited class, and next due date. Stat tiles count what needs attention today. The
+  state chips filter the list, and the study switcher in the header narrows everything to
+  one trial.
+- **Case**: the E2B(R3) sections of the latest version (sources, patient, events, drugs,
+  assessments, tests, narrative), the obligations and submissions, attachments, the
+  facts (signatures, unblinding, nullification), and the audit timeline.
+- **Reporting**: expected submissions across studies, grouped by due date, with the
+  on-time metrics per study and destination.
+- **DSUR**: the interval line listing of serious adverse reactions and the cumulative
+  tabulation by system organ class and arm.
+- **Admin**: studies, sites, products and their reference safety information,
+  destinations, reporting rules, people and grants, dictionaries.
+- **Audit**: the audit-chain status, every signature with its hash recomputed, and the
+  raw event trail.
+
+<Shot
+  src={queueFiltered}
+  alt="The queue filtered to cases in medical review: the Medical review chip is pressed, a clear link appears, and two cases are listed."
+  caption="Filters live in the address bar, so a filtered view can be bookmarked or sent to a colleague."
+/>
+
+## Who sees what
+
+Access is a grant on a person: a role (administrator, case processor, medical reviewer,
+read-only, intake service) scoped to a sponsor organization, to a single study, or to the
+whole instance. A CRO hosts several sponsors on one instance and their staff never see
+each other's cases. The header shows who you are; the app renders only the actions your
+grants permit. The same queue, as each of the demo personas:
+
+<Tabs syncKey="persona">
+  <TabItem label="Administrator">
+    <Shot
+      src={queue}
+      alt="The queue as Dana Whitfield, CRO administrator: all ten cases across both sponsors, the New case button, and the Admin and Audit pages in the header."
+    />
+    Dana Whitfield, CRO administrator: everything, across both sponsors, including the
+    Admin and Audit pages.
+  </TabItem>
+  <TabItem label="Case processor">
+    <Shot
+      src={queueProcessor}
+      alt="The queue as Marcus Lee, case processor: nine cases, all from the main sponsor; the Northlake case is not listed."
+    />
+    Marcus Lee, case processor: intake, data entry, follow-ups, submissions and
+    acknowledgements, for the main sponsor only. The second sponsor's case is not in his
+    queue at all; the filtering happens on the server, not in the browser.
+  </TabItem>
+  <TabItem label="Medical reviewer">
+    <Shot
+      src={queueReviewer}
+      alt="The queue as Priya Raman MD, medical reviewer: nine cases from the main sponsor; the second sponsor's case is absent."
+    />
+    Priya Raman MD, safety physician: assessments, expectedness overrides, unblinding
+    facts, waivers, and signing, for the main sponsor only. On a case page her action bar
+    offers signing and returning a case to data entry; the administrator's offers everything.
+  </TabItem>
+  <TabItem label="Auditor">
+    <Shot
+      src={queueReadonly}
+      alt="The queue as Sam Okafor, auditor: all ten cases and no New case button; every write action is absent throughout the app."
+    />
+    Sam Okafor, auditor: read everything, change nothing. Every action button is absent
+    rather than disabled, and the API would answer 403 to any write.
+  </TabItem>
+  <TabItem label="EDC intake">
+    <Shot
+      src={queueIngest}
+      alt="The intake service identity: a notice that this identity can create records but cannot read anything back, and an empty queue."
+    />
+    The EDC intake service: create cases from a source system; read nothing back. The
+    notice is what a misconfigured integration would see.
+  </TabItem>
+</Tabs>
+
+Continue with [intake and data entry](/pv-core/user-guide/intake-and-data-entry/).

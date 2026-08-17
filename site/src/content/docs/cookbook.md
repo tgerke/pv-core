@@ -90,6 +90,12 @@ curl -s -H "Authorization: Bearer dev-reviewer-token" -H 'Content-Type: applicat
   -d '{"meaning":"approval","reauth_token":"dev-reviewer-token"}'
 ```
 
+Every route, its parameters, and its response shape are in the interactive API reference
+at `/docs` on the API origin, generated from the same OpenAPI 3.1 document the app is
+built against; requests can be tried from the page with a dev token.
+
+![The API reference: the pv-core API's routes listed down the left, one route's parameters and response schema in the middle, and a try-it panel with client examples on the right.](../../assets/screenshots/api-docs.webp)
+
 ## Read-only SQL
 
 The `v_*` views are public API. See [direct SQL access](/pv-core/sql-access/).

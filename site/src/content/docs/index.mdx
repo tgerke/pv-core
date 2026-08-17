@@ -12,12 +12,12 @@ hero:
     their status is derived on every read; and 21 CFR Part 11 is a property of the
     schema, not a feature toggle.
   actions:
-    - text: Get started
-      link: /pv-core/getting-started/
+    - text: Take the tour
+      link: /pv-core/evaluate/tour/
       icon: right-arrow
       variant: primary
-    - text: User guide
-      link: /pv-core/user-guide/
+    - text: Get started
+      link: /pv-core/getting-started/
       variant: secondary
     - text: GitHub
       link: https://github.com/tgerke/pv-core
@@ -25,30 +25,133 @@ hero:
       variant: minimal
 ---
 
-import { Card, CardGrid } from "@astrojs/starlight/components";
+import { Image } from "astro:assets";
+import queue from "../../assets/screenshots/queue.webp";
 
-<CardGrid>
-  <Card title="Cases shaped by E2B(R3)" icon="document">
-    Reporters, patient, coded events with the six seriousness criteria, drugs, drug-by-event
-    assessments, narrative. Versions are editable until the first signature and immutable
-    after it; follow-ups and corrections are new versions.
-  </Card>
-  <Card title="Clocks derived, never maintained" icon="approve-check">
-    Reporting rules are rows: destination, timeline, and a test over the case. Obligations
-    materialize the moment a case is a valid ICSR; due soon, overdue, submitted,
-    acknowledged, superseded, and waived are computed on every read.
-  </Card>
-  <Card title="Compliance as schema" icon="seti:lock">
-    A hash-chained audit trail written by database triggers, immutable signatures and
-    submissions, signatures bound to the version hash, re-authentication to sign, and a
-    runtime role that can only run DML.
-  </Card>
-  <Card title="Made for the R seat too" icon="laptop">
-    The web app consumes only the public API. The overdue queue, the DSUR line listing, and
-    every derived view are one httr2 call or one read-only SQL connection away.
-  </Card>
-</CardGrid>
+<div class="landing">
 
-Continue with [getting started](/pv-core/getting-started/) or the [user guide](/pv-core/user-guide/).
-For what a CRO safety-database engagement needs and how far this is from it, read the
-[roadmap and honest gaps](/pv-core/roadmap/).
+<figure class="landing-shot">
+  <Image
+    src={queue}
+    alt="The case queue as the CRO administrator sees it: ten cases across two sponsors, overdue clocks first, with stat tiles for overdue obligations, cases due within three days, intake items, and cases awaiting medical review."
+    loading="eager"
+    widths={[720, 1440, 2880]}
+    sizes="(min-width: 72rem) 72rem, 100vw"
+  />
+  <figcaption>
+    The case queue. Every state, expedited class, and due date on it is computed from the
+    record when the page loads; nobody maintains a status.
+  </figcaption>
+</figure>
+
+<section>
+
+## Why pv-core
+
+<div class="landing-grid landing-grid--4">
+  <div class="landing-card">
+    <h3>Cases shaped by E2B(R3)</h3>
+    <p>
+      Reporters, patient, coded events with the six seriousness criteria, drugs,
+      drug-by-event assessments, narrative. Versions are editable until the first signature
+      and immutable after it; follow-ups and corrections are new versions.
+    </p>
+  </div>
+  <div class="landing-card">
+    <h3>Clocks derived, never maintained</h3>
+    <p>
+      Reporting rules are rows: destination, timeline, and a test over the case. Obligations
+      materialize the moment a case is a valid ICSR; due soon, overdue, submitted,
+      acknowledged, superseded, and waived are computed on every read.
+    </p>
+  </div>
+  <div class="landing-card">
+    <h3>Compliance as schema</h3>
+    <p>
+      A hash-chained audit trail written by database triggers, immutable signatures and
+      submissions, signatures bound to the version hash, re-authentication to sign, and a
+      runtime role that can only run DML.
+    </p>
+  </div>
+  <div class="landing-card">
+    <h3>Made for the R seat too</h3>
+    <p>
+      The web app consumes only the public API. The overdue queue, the DSUR line listing,
+      and every derived view are one httr2 call or one read-only SQL connection away.
+    </p>
+  </div>
+</div>
+
+</section>
+
+<section>
+
+## Start here by seat
+
+<div class="landing-grid landing-grid--4">
+  <a class="landing-card" href="/pv-core/evaluate/">
+    <h3>Evaluating it for a CRO or sponsor</h3>
+    <p>
+      A guided tour of every screen, the demo cases explained, and a fit assessment that
+      turns your needs into a summary you can send back.
+    </p>
+  </a>
+  <a class="landing-card" href="/pv-core/user-guide/intake-and-data-entry/">
+    <h3>Processing cases</h3>
+    <p>
+      Intake, the four criteria of a valid case, day zero, the E2B(R3) sections, source
+      documents, and follow-ups, as they look in the app.
+    </p>
+  </a>
+  <a class="landing-card" href="/pv-core/user-guide/coding-and-assessment/">
+    <h3>Reviewing and signing</h3>
+    <p>
+      Seriousness, expectedness against dated reference safety information, causality by
+      drug and event, and the signature that locks a version.
+    </p>
+  </a>
+  <a class="landing-card" href="/pv-core/sql-access/">
+    <h3>Reading it from R or SQL</h3>
+    <p>
+      The read-only role, the derived views, and the cookbook: the safety physician's
+      morning and the DSUR listing as queries.
+    </p>
+  </a>
+</div>
+
+</section>
+
+<section>
+
+## Where to go next
+
+<div class="landing-grid landing-grid--4">
+  <a class="landing-card" href="/pv-core/getting-started/">
+    <h3>Getting started</h3>
+    <p>The whole stack on a laptop in a few minutes, with the seeded demo and five personas.</p>
+  </a>
+  <a class="landing-card" href="/pv-core/evaluate/tour/">
+    <h3>Guided tour</h3>
+    <p>A case from intake to acknowledgement in fifteen screens, then the edge cases.</p>
+  </a>
+  <a class="landing-card" href="/pv-core/user-guide/">
+    <h3>User guide</h3>
+    <p>The everyday tasks, organized by what the person at the keyboard is doing.</p>
+  </a>
+  <a class="landing-card" href="/pv-core/compliance/">
+    <h3>Compliance</h3>
+    <p>Requirement to mechanism, and an honest list of what is not claimed.</p>
+  </a>
+</div>
+
+</section>
+
+<div class="landing-status">
+  <strong>Not validated software.</strong> Formal computer system validation (GAMP 5
+  categorization, risk assessment, IQ/OQ/PQ, SOPs, training records) is a separate,
+  deliberate program that has not been performed; the software generates its raw material.
+  What a CRO safety-database engagement needs and how far this is from it is written down on
+  the <a href="/pv-core/roadmap/">roadmap and honest gaps</a> page.
+</div>
+
+</div>

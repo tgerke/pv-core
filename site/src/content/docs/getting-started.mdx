@@ -1,12 +1,14 @@
 ---
 title: "Getting started"
+description: "Run the whole pv-core stack locally with the seeded demo, meet the five demo personas, and load a licensed MedDRA release."
 ---
 
 pv-core runs locally with Node and Docker. The whole stack (Postgres, REST API, and web
 app) comes up in a few minutes with a seeded demo: two sponsors, three trials, and ten
 cases sitting at every point of the regulatory clock. Standing it up is a developer task;
 once it is running, the [user guide](/pv-core/user-guide/) covers everything from there
-without code.
+without code. If you only want to see what it does before running anything, the
+[guided tour](/pv-core/evaluate/tour/) is the same demo in screenshots.
 
 ## Prerequisites
 
@@ -27,6 +29,10 @@ pnpm dev          # API on :8789, web on :5176
 Open `http://localhost:5176` for the case queue and `http://localhost:8789/docs` for the
 interactive API reference.
 
+![The case queue on first load: ten seeded cases across two sponsors, overdue clocks first, with stat tiles for overdue obligations, cases due within three days, intake items, and cases awaiting medical review.](../../assets/screenshots/queue.webp)
+
+![The interactive API reference: every route with its parameters and response schema, and a try-it panel that takes a dev token.](../../assets/screenshots/api-docs.webp)
+
 ## Who you are in the demo
 
 `AUTH_MODE=dev` maps five bearer tokens to seeded people. The web app's persona switcher
@@ -40,8 +46,11 @@ interactive API reference.
 | `dev-readonly-token` | Sam Okafor, auditor | Read everything, change nothing |
 | `dev-ingest-token` | EDC intake service | Create cases from a source system; read nothing back |
 
+The user guide shows [the queue as each of them sees it](/pv-core/user-guide/#who-sees-what).
+
 Dev mode is a demo affordance. A pilot runs `AUTH_MODE=oidc` against your identity
-provider ([deployment](/pv-core/compliance/#honest-gaps-current-phase)).
+provider; see the [honest gaps](/pv-core/compliance/#honest-gaps-current-phase) on the
+compliance page and the deployment checklist in the repository (`docs/05-deployment.md`).
 
 ## What the seed shows
 

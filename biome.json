@@ -9,6 +9,7 @@
       "!docs/validation",
       "!.claude",
       "!site/.astro",
+      "!site/src/assets",
       "!**/*.astro",
       "!packages/db/migrations/meta"
     ]

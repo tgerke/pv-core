@@ -20,6 +20,7 @@ export default defineConfig({
       plugins: [starlightLinksValidator({ errorOnLocalLinks: false })],
       sidebar: [
         { label: "Getting started", items: ["getting-started"] },
+        { label: "Evaluate", items: ["evaluate", "evaluate/tour", "evaluate/fit"] },
         {
           label: "User guide",
           items: [

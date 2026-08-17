@@ -1,0 +1,30 @@
+---
+// One step of a <Walkthrough>: a title, a screenshot, and slotted markdown.
+// `id` is passed as an MDX attribute so `/evaluate/tour/#step-…` links validate.
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+
+interface Props {
+  id: string;
+  title: string;
+  image: ImageMetadata;
+  alt: string;
+}
+
+const { id, title, image, alt } = Astro.props;
+const widths = [720, 1440, 2880].filter((w) => w <= image.width);
+if (widths.length === 0) widths.push(image.width);
+---
+
+<li class="pv-walk__step" id={id} data-walk-step data-step-title={title} tabindex="-1">
+  <h3 class="pv-walk__title">{title}</h3>
+  <figure class="pv-walk__figure">
+    <Image
+      src={image}
+      alt={alt}
+      widths={widths}
+      sizes="(min-width: 50rem) 45rem, calc(100vw - 2rem)"
+    />
+  </figure>
+  <div class="pv-walk__body"><slot /></div>
+</li>

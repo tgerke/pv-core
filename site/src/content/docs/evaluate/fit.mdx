@@ -1,0 +1,59 @@
+---
+title: "Fit assessment"
+description: "Tick what your safety-database engagement needs and get a summary of what pv-core meets, partly meets, or does not yet do, ready to send back with your notes."
+sidebar:
+  label: Fit assessment
+---
+
+import FitAssessment from "../../../components/FitAssessment.astro";
+
+The verdicts below come straight from the readiness table on the
+[roadmap](/pv-core/roadmap/#what-a-build-us-a-safety-database-engagement-needs), read at
+build time, so this page can never say something the roadmap does not. Two ground rules
+carry over from there: a gap is not a commitment, and a boundary is not a gap.
+
+Tick the needs your engagement has. The summary fills in as you go and stays in your
+browser; when you are done, copy it, add your notes, and send it to whoever pointed you
+here.
+
+<FitAssessment />
+
+## Also worth knowing
+
+Facts that come up in the first conversation and are documented elsewhere on this site:
+
+- **Blinded studies.** The randomization system breaks the blind; pv-core records the fact
+  (arm, when, why, code-break reference), and the arm appears only where the record needs
+  it ([clocks and submissions](/pv-core/user-guide/clocks-and-submissions/#waivers-unblinding-nullification)).
+- **Several sponsors on one instance.** Sponsors are a scope, not a tenant: segregation
+  rests on grants and scoped reads, and there are no per-sponsor keys or isolation
+  guarantees ([compliance, honest gaps](/pv-core/compliance/#honest-gaps-current-phase)).
+- **The EDC.** A source system can push cases in through an intake identity that creates
+  cases and attachments and reads nothing back ([intake](/pv-core/user-guide/intake-and-data-entry/#intake-from-the-edc));
+  reconciliation of the EDC's serious events against pv-core's cases is not built yet
+  ([roadmap](/pv-core/roadmap/#edc-reconciliation)).
+- **Sign-on and signatures.** A pilot runs against your identity provider with OIDC, and
+  signing requires re-authentication; the demo's dev tokens are not a Part 11 posture
+  ([compliance](/pv-core/compliance/)).
+- **Your data team.** The web app consumes only the public API, and every derived view is
+  readable over a read-only SQL connection or from R ([SQL access](/pv-core/sql-access/),
+  [cookbook](/pv-core/cookbook/)).
+- **Hosting.** One instance per CRO, run by the deploying organization from published
+  container images; there is no hosted service ([getting started](/pv-core/getting-started/)).
+- **MedDRA.** Coding is against a licensed release you load yourself; nothing licensed
+  ships in the repository, and the demo dictionary is a labeled illustrative subset
+  ([getting started](/pv-core/getting-started/#meddra)).
+- **Which regulators.** The seeded reporting rules cover FDA IND safety reports, EU SUSARs,
+  and investigator and IRB notifications. Destinations and rules are data an
+  administrator adds, so another authority is configuration against your own verified
+  texts, not a code change ([administration](/pv-core/user-guide/administration/#destinations-and-reporting-rules)).
+- **Validation.** It is not validated software. The raw material for a validation program
+  (IQ and OQ reports, a requirement-to-test traceability matrix) is generated from live
+  runs; the program itself is organizational work ([validation](/pv-core/validation/)).
+
+## Send it back
+
+Copy the summary above, add what the checkboxes cannot say (the workflow it concerns, who
+does it and how often, the regulator or destination involved, how you handle it today, and
+what done would look like), and send it to the person who gave you this link. That is how
+the roadmap gets its next arc.

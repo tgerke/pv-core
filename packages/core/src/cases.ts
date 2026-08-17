@@ -517,9 +517,25 @@ export async function createCase(
         );
         if (!st) throw new CoreError("invalid", "study not found");
       }
-      const country =
+      // C.1.1 country: the primary source's, else the reporting site's, else
+      // the study's first site (a machine intake often arrives without a
+      // reporter), else XX.
+      let country =
         (input.sources?.find((s) => s.isPrimaryForRegulatory) ?? input.sources?.[0])?.country ??
-        "XX";
+        null;
+      if (!country && input.patient?.studySiteId) {
+        const [ss] = await tx.execute(
+          sql`SELECT s.country FROM study_site ss JOIN site s ON s.id = ss.site_id WHERE ss.id = ${input.patient.studySiteId}`,
+        );
+        country = (ss?.country as string | undefined) ?? null;
+      }
+      if (!country && input.studyId) {
+        const [ss] = await tx.execute(
+          sql`SELECT s.country FROM study_site ss JOIN site s ON s.id = ss.site_id WHERE ss.study_id = ${input.studyId} ORDER BY ss.site_number LIMIT 1`,
+        );
+        country = (ss?.country as string | undefined) ?? null;
+      }
+      country = country ?? "XX";
       const senderCaseId =
         input.senderCaseId ?? (await nextSenderCaseId(tx, prod.sponsor_org_id as string, country));
       const worldwideUniqueId = input.worldwideUniqueId ?? senderCaseId;

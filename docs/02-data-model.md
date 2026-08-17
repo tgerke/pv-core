@@ -221,7 +221,8 @@ fields: additive changes are safe, renames and removals are breaking.
   to domain tables, not by application discipline. Captures actor (from
   `set_config('pv.actor_id', …)` established per transaction by the API), action, entity,
   full before/after row images, and a SHA-256 hash chained to the previous event so
-  retroactive edits are detectable (`pv_verify_audit_chain()`). Signatures, submissions,
+  retroactive edits are detectable (`pv_verify_audit_chain()`, from any session time zone:
+  the timestamp is hashed as a canonical UTC rendering). Signatures, submissions,
   acknowledgements, attachments, unblinding, nullification, transitions, listed RSI terms,
   and loaded dictionaries reject UPDATE and DELETE for every role. Case versions and their
   children reject them once a signature exists.

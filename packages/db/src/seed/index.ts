@@ -1421,6 +1421,9 @@ await db.transaction(async (tx) => {
   }
 });
 
+// Fresh statistics for the planner: the truncate-and-rebuild leaves every
+// table with default estimates until autovacuum catches up.
+await pg`ANALYZE`;
 const chain = (
   await pg<{ n: number }[]>`SELECT count(*)::int AS n FROM pv_verify_audit_chain()`
 )[0]!.n;

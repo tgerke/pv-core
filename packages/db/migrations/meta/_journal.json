@@ -22,6 +22,13 @@
       "when": 1786978303845,
       "tag": "0002_app_role",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1786978304845,
+      "tag": "0003_sync_jit_off_and_canonical_hash_time",
+      "breakpoints": true
     }
   ]
 }

@@ -10,8 +10,10 @@ export function createDb(url: string = databaseUrl()) {
   const sql = postgres(url, {
     onnotice: () => {},
     // Calendar-day clocks (ADR-0007): the sponsor's business zone, not the
-    // container's.
-    connection: { TimeZone: pvTimeZone() },
+    // container's. Planner JIT off: the view-heavy engine statements trip
+    // its cost thresholds on stale statistics and pay seconds of LLVM
+    // compilation for millisecond queries (migration 0003).
+    connection: { TimeZone: pvTimeZone(), jit: "off" },
   });
   const db = drizzle(sql, { schema });
   return { sql, db };

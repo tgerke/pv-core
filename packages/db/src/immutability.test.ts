@@ -115,6 +115,18 @@ describe("audit trail (§11.10(e), ADR-0003)", () => {
     expect(problems).toHaveLength(0);
   });
 
+  it("verifies identically from any session time zone (migration 0003)", async () => {
+    // The hash input for occurred_at is a canonical UTC rendering, so a psql
+    // or pv_readonly session in another zone reaches the same verdict.
+    for (const tz of ["UTC", "Asia/Tokyo", "America/Los_Angeles"]) {
+      await inRollback(async (tx) => {
+        await tx`SELECT set_config('TimeZone', ${tz}, true)`;
+        const problems = await tx`SELECT * FROM pv_verify_audit_chain()`;
+        expect(problems, tz).toHaveLength(0);
+      });
+    }
+  });
+
   it("detects tampering when a row is altered with triggers disabled", async () => {
     await inRollback(async (tx) => {
       await tx`ALTER TABLE audit_event DISABLE TRIGGER audit_event_immutable`;

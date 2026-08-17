@@ -83,5 +83,6 @@ terminal-only knowledge.
 Back up the Postgres volume and the object-store bucket together; a submission record
 points at payload bytes by SHA-256, and a restore that has one without the other is
 incomplete. `GET /audit-chain/verify` (or `SELECT * FROM pv_verify_audit_chain()`) after a
-restore confirms the audit trail is intact; `v_signature_integrity` confirms every signed
-version still hashes to what was signed.
+restore confirms the audit trail is intact; the verdict is the same from any session time
+zone, since the hash input for `occurred_at` is a canonical UTC rendering (migration 0003).
+`v_signature_integrity` confirms every signed version still hashes to what was signed.

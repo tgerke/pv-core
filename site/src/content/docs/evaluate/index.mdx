@@ -23,14 +23,14 @@ schema, not a feature toggle.
 
 <Shot
   src={queue}
-  alt="The case queue as the CRO administrator sees it: ten cases across two sponsors, overdue clocks first, with stat tiles for overdue obligations, cases due within three days, intake items, and cases awaiting medical review."
+  alt="The case queue as the CRO administrator sees it: twelve cases across two sponsors, overdue clocks first, with stat tiles for overdue obligations, cases due within three days, intake items, cases awaiting medical review, investigator/sponsor disagreements, and anticipated SAEs under aggregate review."
   caption="The queue is the morning view. Nothing here is a status somebody typed; every chip and every due date is computed from the record when the page loads."
 />
 
 ## The demo you will be shown
 
 Every screenshot on this site, and every screen share, uses the same seeded demo: two
-sponsors, three trials, and ten cases sitting at every point of the regulatory clock. The
+sponsors, three trials, and twelve cases sitting at every point of the regulatory clock. The
 names, products, and subjects are invented, the dictionary is a labeled illustrative subset
 rather than MedDRA, and the dates are relative to the day the demo was seeded, so the
 clocks always read the same way.
@@ -46,6 +46,8 @@ clocks always read the same way.
 | US-CORC-2026-0007 | A duplicate, nullified with a reason and a nullification report on record | [Tour, scenarios](/pv-core/evaluate/tour/#scenarios-the-clock-has-to-survive) |
 | US-CORC-2026-0008 | Unblinded to placebo after the fact; every obligation waived with the reason on record | [Tour, scenarios](/pv-core/evaluate/tour/#scenarios-the-clock-has-to-survive) |
 | US-CORC-2026-0009 | Pushed in by the EDC without a reporter: an intake item, not yet a valid case | [Tour, step 4](/pv-core/evaluate/tour/#step-intake) |
+| US-CORC-2026-0010 | A pathological fracture through a known bone metastasis, designated anticipated in the study population: the FDA IND rule is held back by name for aggregate review while the EU CTR clock and the investigator letter still run | [Coding and assessment](/pv-core/user-guide/coding-and-assessment/#anticipated-serious-adverse-events) |
+| US-CORC-2026-0011 | Investigator says related, sponsor says not: both opinions kept and transmitted, the EU rule owed on either party's view, the FDA rule not owed on the sponsor's | [Coding and assessment](/pv-core/user-guide/coding-and-assessment/#when-the-sponsor-disagrees-with-the-site) |
 | US-NLB-2026-0001 | The second sponsor's case, which the first sponsor's staff never see | [Who sees what](/pv-core/evaluate/tour/#who-sees-what) |
 
 ## Twenty minutes, in this order

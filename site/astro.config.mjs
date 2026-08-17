@@ -31,6 +31,7 @@ export default defineConfig({
             "user-guide/dsur",
             "user-guide/attachments",
             "user-guide/administration",
+            "user-guide/what-lives-where",
           ],
         },
         {

@@ -31,6 +31,8 @@ import factsCard from "../../../assets/screenshots/facts-card.webp";
 import caseNullified from "../../../assets/screenshots/case-7-nullified.webp";
 import caseExpected from "../../../assets/screenshots/case-4-serious-expected.webp";
 import caseUnassessed from "../../../assets/screenshots/case-5-data-entry.webp";
+import caseAnticipated from "../../../assets/screenshots/case-10-anticipated.webp";
+import caseDisagreement from "../../../assets/screenshots/case-11-disagreement.webp";
 
 import queueProcessor from "../../../assets/screenshots/queue-processor.webp";
 import queueReviewer from "../../../assets/screenshots/queue-reviewer.webp";
@@ -60,7 +62,7 @@ the whole tour out on one page.
   id="step-queue"
   title="The morning queue"
   image={queue}
-  alt="The case queue as the CRO administrator: ten cases across two sponsors, overdue clocks first, four stat tiles, and filter chips for each derived state.">
+  alt="The case queue as the CRO administrator: twelve cases across two sponsors, overdue clocks first, six stat tiles, and filter chips for each derived state.">
 
 Dana Whitfield, the CRO administrator, sees every case across both sponsors. Overdue
 obligations sort first; the tiles count what needs attention today. Each row shows the
@@ -300,6 +302,31 @@ Real caseloads are mostly edge cases. The seed stages the ones evaluators ask ab
     unexpected event that would start a clock and flag the case in the queue; on this
     non-serious one it stays a visible reminder that the physician's judgment is still owed.
   </TabItem>
+  <TabItem label="Anticipated in the population">
+    <Shot
+      src={caseAnticipated}
+      alt="Case US-CORC-2026-0010 in medical review: a pathological fracture with chips reading serious, unexpected, reporter related, sponsor related, and anticipated in the study population; the Obligations panel shows the EU CTR 15-day rule and the investigator letter pending, and the Rule matches card shows the FDA IND 15-day rule held back, naming the concept from the safety surveillance plan."
+      caption="Anticipated is not expected. The fracture is unexpected against the brochure and still a SUSAR for EudraVigilance; FDA's December 2025 guidance says an SAE the population brings on its own is reviewed in aggregate, not reported one by one, and the FDA rule is held back by name."
+    />
+    The study's safety surveillance plan lists skeletal complications of bone metastases as
+    anticipated in this mCRPC population. The medical reviewer designated the event against
+    that concept; the FDA IND rule, which excludes anticipated events, is listed with no
+    clock and the reason, while the EU CTR clock and the investigator letter run as before.
+    The queue, the case header, and the digest all say the report was held back.
+  </TabItem>
+  <TabItem label="Investigator and sponsor differ">
+    <Shot
+      src={caseDisagreement}
+      alt="Case US-CORC-2026-0011 in medical review, Assessments tab: an amber notice that investigator and sponsor differ on causality, the reporter's row reading related and the sponsor's not related with the sponsor's reasoning; the header shows the EU CTR clock owed and the case flagged."
+      caption="Both opinions stay on the record and travel with the report. Which one starts a clock is each rule's decision: the EU rule counts either party, the FDA IND rule the sponsor."
+    />
+    The investigator called an acute kidney injury after three days of diarrhoea related;
+    the sponsor's physician, seeing creatinine normalize on fluids with study treatment
+    unchanged, did not. The sponsor never edits the investigator's row. EudraVigilance and
+    the investigators are owed a 15-day report on either party's view; FDA is not, on the
+    sponsor's. If the sponsor wants the site to reconsider, the query goes through the EDC or
+    a letter, and the answer opens a new version.
+  </TabItem>
 </Tabs>
 
 ## Who sees what
@@ -313,7 +340,7 @@ grants permit. The same queue, as each of the demo personas:
   <TabItem label="Administrator">
     <Shot
       src={queue}
-      alt="The queue as Dana Whitfield, CRO administrator: all ten cases across both sponsors, the New case button, and the Admin and Audit pages in the header."
+      alt="The queue as Dana Whitfield, CRO administrator: all twelve cases across both sponsors, the New case button, and the Admin and Audit pages in the header."
     />
     Dana Whitfield, CRO administrator: everything, across both sponsors, including the
     Admin and Audit pages.
@@ -321,7 +348,7 @@ grants permit. The same queue, as each of the demo personas:
   <TabItem label="Case processor">
     <Shot
       src={queueProcessor}
-      alt="The queue as Marcus Lee, case processor: nine cases, all from the main sponsor; the Northlake case is not listed."
+      alt="The queue as Marcus Lee, case processor: eleven cases, all from the main sponsor; the Northlake case is not listed."
     />
     Marcus Lee, case processor: intake, data entry, follow-ups, submissions and
     acknowledgements, for the main sponsor only. The second sponsor's case is not in his
@@ -330,7 +357,7 @@ grants permit. The same queue, as each of the demo personas:
   <TabItem label="Medical reviewer">
     <Shot
       src={queueReviewer}
-      alt="The queue as Priya Raman MD, medical reviewer: nine cases from the main sponsor; the second sponsor's case is absent."
+      alt="The queue as Priya Raman MD, medical reviewer: eleven cases from the main sponsor; the second sponsor's case is absent."
     />
     Priya Raman MD, safety physician: assessments, expectedness overrides, unblinding
     facts, waivers, and signing, for the main sponsor only. On a case page her action bar
@@ -339,7 +366,7 @@ grants permit. The same queue, as each of the demo personas:
   <TabItem label="Auditor">
     <Shot
       src={queueReadonly}
-      alt="The queue as Sam Okafor, auditor: all ten cases and no New case button; every write action is absent throughout the app."
+      alt="The queue as Sam Okafor, auditor: all twelve cases and no New case button; every write action is absent throughout the app."
     />
     Sam Okafor, auditor: read everything, change nothing. Every action button is absent
     rather than disabled, and the API would answer 403 to any write.

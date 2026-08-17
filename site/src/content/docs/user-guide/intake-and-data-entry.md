@@ -1,6 +1,6 @@
 ---
 title: "Intake and data entry"
-description: "How a case starts in pv-core: the four criteria of a valid ICSR, day zero, the E2B(R3) sections, source documents, and intake from the EDC."
+description: "How a case starts in pv-core: the site's SAE report, the four criteria of a valid ICSR, day zero, how the report arrived, the E2B(R3) sections, source documents, and intake from the EDC."
 ---
 
 A case starts the moment a serious adverse event reaches the safety team, whether by
@@ -8,6 +8,24 @@ phone, fax, an SAE form, or a push from the EDC. In pv-core that moment is **New
 you record whatever arrived, and the app tells you what is still missing before the case
 counts as a valid report. The [guided tour](/pv-core/evaluate/tour/#step-new-case) walks
 through this page with a worked example.
+
+## Where the report comes from
+
+At the site, a coordinator, the treating physician, or the investigator recognizes a
+serious event and reports it to the sponsor at once, with the investigator's view on
+causality; FDA reads "immediately" as as soon as feasible and expects the initial report
+generally within a calendar day (FDA, Investigator Responsibilities: Safety Reporting for
+Investigational Drugs and Devices, December 2025, §V.A and §V.B). That report is usually a
+paper or PDF SAE form sent by email or fax, sometimes a phone call, and it usually arrives
+before the event has been entered in the EDC. It is the primary source for the case: enter
+it here, attach the form, and do not wait for the EDC. The safety database is the record
+of the report; the EDC's adverse-event page is the site's record of the trial, and the two
+are reconciled later, not merged.
+
+The Receipt card asks how the report arrived (email, fax, phone, an EDC push, or other)
+and for the reference it carried: the message id, the fax cover, the call log. That
+provenance shows on the case header and in the queue, so a monitor asking "where did this
+one come from" has the answer without opening the attachment.
 
 ![The empty new-case form: Receipt, Patient, Reporters, Events, Drugs, and Narrative cards on the left; on the right the Valid ICSR rail with four grey checks and a Save as intake button.](../../../assets/screenshots/new-case-empty.webp)
 

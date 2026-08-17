@@ -50,6 +50,7 @@ export default function Dsur({ study }: { study: Study | undefined }) {
     "Expectedness",
     "RSI",
     "Other serious reactions",
+    "Sponsor comment",
   ];
   const listingRows = rows.map((r) => [
     r.sender_case_id,
@@ -69,6 +70,7 @@ export default function Dsur({ study }: { study: Study | undefined }) {
     r.expectedness,
     r.rsi_label ?? "",
     r.other_serious_reactions ?? "",
+    r.sponsor_comment ?? "",
   ]);
 
   const sae = summary.data ?? [];
@@ -128,7 +130,7 @@ export default function Dsur({ study }: { study: Study | undefined }) {
           <Empty>No serious adverse reactions in this period.</Empty>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[88rem] text-xs">
+            <table className="w-full min-w-[100rem] text-xs">
               <thead>
                 <tr className="border-b border-hairline">
                   {listingHeader.map((h) => (

@@ -114,7 +114,22 @@ export interface QueueRow {
   latest_signed_at: string | null;
   attachment_count: number | string;
   version_count: number | string;
+  any_anticipated: boolean;
+  any_causality_disagreement: boolean;
+  received_via: ReceiptChannel | null;
+  received_ref: string | null;
 }
+
+export type ReceiptChannel = "email" | "fax" | "phone" | "edc_push" | "other";
+export const RECEIPT_CHANNELS: { value: ReceiptChannel; label: string }[] = [
+  { value: "email", label: "Email (SAE form)" },
+  { value: "fax", label: "Fax" },
+  { value: "phone", label: "Phone" },
+  { value: "edc_push", label: "EDC push" },
+  { value: "other", label: "Other" },
+];
+export const receiptChannelLabel = (v: ReceiptChannel | null | undefined) =>
+  RECEIPT_CHANNELS.find((c) => c.value === v)?.label ?? null;
 
 // --- Obligations, submissions, compliance ------------------------------------------------
 
@@ -252,6 +267,9 @@ export interface SarLineRow {
   expectedness: string;
   rsi_label: string | null;
   other_serious_reactions: string | null;
+  /** E2F §3.7.2(l): the sponsor's position when it differs, and the anticipated concept when designated. */
+  sponsor_comment: string | null;
+  anticipated_label: string | null;
 }
 
 export interface SaeSummaryRow {
@@ -378,6 +396,15 @@ export interface CaseEvent {
   reporter_related: boolean | null;
   sponsor_related: boolean | null;
   related_either: boolean | null;
+  causality_disagreement: boolean;
+  anticipated: boolean;
+  anticipated_basis: "prespecified" | "added_during_trial" | null;
+  anticipated_event_id: string | null;
+  anticipated_label: string | null;
+  anticipated_plan_reference: string | null;
+  anticipated_candidate: boolean;
+  designation_id: string | null;
+  designation_rationale: string | null;
 }
 
 export interface CaseDrug {
@@ -475,6 +502,9 @@ export interface RuleMatch {
   rule_name: string;
   citation: string | null;
   destination_name: string;
+  /** Set when the rule would apply but the sponsor's designation held it back. */
+  excluded_reason: "anticipated" | null;
+  anticipated_labels: string | null;
 }
 
 export interface CaseVersion {
@@ -498,6 +528,9 @@ export interface CaseVersion {
   any_serious: boolean;
   any_susar: boolean;
   causality_assessed: boolean;
+  any_anticipated: boolean;
+  all_susar_anticipated: boolean;
+  any_causality_disagreement: boolean;
   is_locked: boolean;
   sha256: string;
   created_by_name: string | null;
@@ -571,6 +604,8 @@ export interface CaseDetail {
   study_id: string | null;
   product_id: string | null;
   first_received_date: string;
+  received_via: ReceiptChannel | null;
+  received_ref: string | null;
   source_system: string | null;
   source_ref: string | null;
   intake_payload: unknown;
@@ -595,6 +630,8 @@ export interface CaseDetail {
   product_name: string | null;
   sponsor_org_id: string | null;
   is_blinded: boolean | null;
+  any_anticipated: boolean;
+  any_causality_disagreement: boolean;
   study_title: string | null;
   created_by_name: string | null;
   versions: CaseVersion[];
@@ -701,6 +738,29 @@ export interface Product {
   rsi_versions: RsiVersion[] | null;
 }
 
+export type AnticipatedRateUnit = "per_100_participant_years" | "proportion";
+
+/** A serious adverse event the safety surveillance plan anticipates in the study population (one medical concept, several PTs). */
+export interface AnticipatedEvent {
+  id: string;
+  study_id: string;
+  label: string;
+  prespecified: boolean;
+  plan_reference: string | null;
+  justification: string | null;
+  predicted_rate: string | null;
+  rate_unit: AnticipatedRateUnit | null;
+  rate_basis: string | null;
+  effective_from: string;
+  effective_to: string | null;
+  approved_by: string | null;
+  created_at: string;
+  protocol_number: string;
+  sponsor_org_id: string;
+  approved_by_name: string | null;
+  terms: { pt_code: string; pt_term: string }[] | null;
+}
+
 export type DestinationKind = "regulator" | "ethics_committee" | "investigator_group" | "partner";
 
 export interface Destination {
@@ -733,6 +793,7 @@ export interface ReportingRule {
   related: boolean | null;
   fatal_or_life_threatening: boolean | null;
   causality_basis: CausalityBasis;
+  excludes_anticipated: boolean;
   requires_prior_submission: boolean;
   timeline_days: number;
   due_soon_days: number;
@@ -890,7 +951,16 @@ export interface CreateCaseBody extends SectionsBody {
   dictionary_id?: string;
   sender_case_id?: string;
   worldwide_unique_id?: string;
+  received_via?: ReceiptChannel | null;
+  received_ref?: string | null;
   assessments?: AssessmentBody[];
+}
+
+export interface DesignationBody {
+  event_seq: number;
+  anticipated: boolean;
+  anticipated_event_id?: string | null;
+  rationale?: string | null;
 }
 
 // --- Transport -------------------------------------------------------------------------
@@ -1133,6 +1203,15 @@ export const useReportingRules = () =>
     queryFn: () => apiFetch<ReportingRule[]>("/reporting-rules"),
   });
 
+export const useAnticipatedEvents = (studyId?: string) =>
+  useQuery({
+    queryKey: ["anticipated-events", studyId ?? "all"],
+    queryFn: () =>
+      apiFetch<AnticipatedEvent[]>(
+        studyId ? `/studies/${studyId}/anticipated-events` : "/anticipated-events",
+      ),
+  });
+
 export const usePeople = () =>
   useQuery({ queryKey: ["people"], queryFn: () => apiFetch<Person[]>("/people") });
 
@@ -1164,6 +1243,14 @@ export const useUpdateAssessments = () =>
     apiFetch<{ ok: boolean }>(
       `/case-versions/${input.versionId}/assessments`,
       jsonInit("PUT", { assessments: input.assessments }),
+    ),
+  );
+
+export const useUpdateDesignations = () =>
+  useInvalidatingMutation((input: { versionId: string; designations: DesignationBody[] }) =>
+    apiFetch<{ ok: boolean }>(
+      `/case-versions/${input.versionId}/designations`,
+      jsonInit("PUT", { designations: input.designations }),
     ),
   );
 
@@ -1371,6 +1458,33 @@ export const useEndRsiVersion = () =>
     ),
   );
 
+export interface CreateAnticipatedEventBody {
+  study_id: string;
+  label: string;
+  prespecified?: boolean;
+  plan_reference?: string | null;
+  justification?: string | null;
+  predicted_rate?: number | null;
+  rate_unit?: AnticipatedRateUnit | null;
+  rate_basis?: string | null;
+  effective_from: string;
+  dictionary_id: string;
+  terms: { pt_code: string; pt_term: string }[];
+}
+
+export const useCreateAnticipatedEvent = () =>
+  useInvalidatingMutation((body: CreateAnticipatedEventBody) =>
+    apiFetch<AnticipatedEvent>("/anticipated-events", jsonInit("POST", body)),
+  );
+
+export const useEndAnticipatedEvent = () =>
+  useInvalidatingMutation((input: { anticipatedEventId: string; effective_to: string }) =>
+    apiFetch<{ ok: boolean }>(
+      `/anticipated-events/${input.anticipatedEventId}/end`,
+      jsonInit("POST", { effective_to: input.effective_to }),
+    ),
+  );
+
 export const useCreateDestination = () =>
   useInvalidatingMutation(
     (body: {
@@ -1398,6 +1512,7 @@ export interface CreateRuleBody {
   related?: boolean | null;
   fatal_or_life_threatening?: boolean | null;
   causality_basis?: CausalityBasis;
+  excludes_anticipated?: boolean;
   requires_prior_submission?: boolean;
   timeline_days: number;
   due_soon_days?: number;

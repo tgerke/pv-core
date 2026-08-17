@@ -45,7 +45,7 @@ cp .env.example .env
 pnpm install
 pnpm db:up        # Postgres 16 (:5436), MinIO, mailpit in Docker
 pnpm db:migrate
-pnpm db:seed      # two sponsors, three fictional trials, ten cases at every point of the clock
+pnpm db:seed      # two sponsors, three fictional trials, twelve cases at every point of the clock
 pnpm dev          # API on :8789, web on :5176
 ```
 

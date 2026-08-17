@@ -56,6 +56,8 @@ export default function Dashboard({ study }: { study: Study | undefined }) {
   ).length;
   const intake = all.filter((r) => r.state === "intake").length;
   const review = all.filter((r) => r.state === "medical_review").length;
+  const differ = all.filter((r) => r.any_causality_disagreement && r.state !== "nullified").length;
+  const anticipated = all.filter((r) => r.any_anticipated && r.state !== "nullified").length;
 
   return (
     <div className="space-y-6">
@@ -80,7 +82,7 @@ export default function Dashboard({ study }: { study: Study | undefined }) {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
         <StatTile
           label="Overdue obligations"
           value={overdue}
@@ -97,6 +99,17 @@ export default function Dashboard({ study }: { study: Study | undefined }) {
           hint="Below the E2B(R3) minimum criteria"
         />
         <StatTile label="Awaiting medical review" value={review} />
+        <StatTile
+          label="Investigator and sponsor differ"
+          value={differ}
+          cssVar={differ > 0 ? "--status-warn" : undefined}
+          hint="Opposite causality opinions on record"
+        />
+        <StatTile
+          label="Anticipated SAEs, aggregate review"
+          value={anticipated}
+          hint="Held from individual IND reporting"
+        />
       </div>
 
       <Card
@@ -228,6 +241,12 @@ function QueueRowView({ r, showStudy }: { r: QueueRow; showStudy: boolean }) {
               hollow
               icon={<Inbox size={11} aria-hidden />}
             />
+          )}
+          {r.any_causality_disagreement && r.state !== "nullified" && (
+            <Chip label="investigator and sponsor differ" cssVar="--status-warn" hollow />
+          )}
+          {r.any_anticipated && r.state !== "nullified" && (
+            <Chip label="anticipated SAE" cssVar="--info" hollow />
           )}
         </span>
       </td>

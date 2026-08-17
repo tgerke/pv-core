@@ -45,7 +45,7 @@ const TOKENS = {
 };
 const SEEDED_STUDIES = ["CORC-2201", "CORC-2202", "CORC-9999", "NLB-301"];
 const SEEDED_CASES = [
-  ...Array.from({ length: 9 }, (_, i) => `US-CORC-2026-000${i + 1}`),
+  ...Array.from({ length: 11 }, (_, i) => `US-CORC-2026-${String(i + 1).padStart(4, "0")}`),
   "US-NLB-2026-0001",
 ];
 
@@ -91,11 +91,11 @@ if (dictionaries.length !== 1 || !dictionaries[0].is_demo_subset)
 const queue = await api("/queue");
 const seen = queue.map((r) => r.sender_case_id).sort();
 if (JSON.stringify(seen) !== JSON.stringify([...SEEDED_CASES].sort()))
-  fail(`queue holds ${queue.length} cases (${seen.join(", ")}); expected the ten seeded ones`);
+  fail(`queue holds ${queue.length} cases (${seen.join(", ")}); expected the twelve seeded ones`);
 
 const cases = {};
 for (const row of queue) cases[row.sender_case_id] = await api(`/cases/${row.case_id}`);
-const c = (n) => cases[`US-CORC-2026-000${n}`];
+const c = (n) => cases[`US-CORC-2026-${String(n).padStart(4, "0")}`];
 const versionOf = (detail, number) => detail.versions.find((v) => v.version_number === number);
 const expect = (cond, what) => {
   if (!cond) fail(`seed drift: ${what}`);
@@ -121,13 +121,24 @@ expect(
 expect(c(7).is_nullified, "case 7 nullified");
 expect(c(8).unblinding?.arm_role === "placebo", "case 8 unblinded to placebo");
 expect(versionOf(c(9), 1).missing.includes("identifiable reporter"), "case 9 missing its reporter");
+expect(
+  c(10).state === "medical_review" &&
+    versionOf(c(10), 1).events.some((e) => e.anticipated) &&
+    versionOf(c(10), 1).rule_matches.some((m) => m.excluded_reason === "anticipated"),
+  "case 10 designated anticipated with the FDA rule held back",
+);
+expect(
+  c(11).state === "medical_review" &&
+    versionOf(c(11), 1).events.some((e) => e.causality_disagreement),
+  "case 11 investigator/sponsor causality disagreement",
+);
 const approvedVersion = c(1).versions.find((v) =>
   v.signatures.some((s) => s.meaning === "approval"),
 );
 expect(approvedVersion, "case 1 has an approved version");
 const corc2201 = studies.find((s) => s.protocol_number === "CORC-2201");
 
-console.log("seed verified: 10 cases, 4 studies, 1 demo dictionary");
+console.log("seed verified: 12 cases, 4 studies, 1 demo dictionary");
 
 // --- generated artifacts (API only) ---------------------------------------
 
@@ -449,7 +460,7 @@ async function group(name, fn) {
   await fn();
 }
 
-const caseUrl = (n) => `${WEB}/cases/${cases[`US-CORC-2026-000${n}`].id}`;
+const caseUrl = (n) => `${WEB}/cases/${c(n).id}`;
 const rowsIn = (title) =>
   `S.must(S.card(${JSON.stringify(title)}), "card").querySelectorAll("tbody tr").length`;
 
@@ -461,7 +472,7 @@ try {
   await setPersona(TOKENS.admin);
 
   await group("queue", async () => {
-    await navigate(`${WEB}/`, `S.loaded() && ${rowsIn("Cases")} === 10`);
+    await navigate(`${WEB}/`, `S.loaded() && ${rowsIn("Cases")} === 12`);
     await shoot("queue", { note: "the case queue, all studies, admin" });
     await shootCard("submission-compliance", "Submission compliance", {
       note: "on-time metrics per study and destination",
@@ -470,12 +481,12 @@ try {
     await shoot("queue-filter-medical-review", { note: "the queue filtered to medical review" });
 
     for (const [who, token, ready] of [
-      ["processor", TOKENS.processor, `${rowsIn("Cases")} === 9`],
-      ["reviewer", TOKENS.reviewer, `${rowsIn("Cases")} === 9`],
+      ["processor", TOKENS.processor, `${rowsIn("Cases")} === 11`],
+      ["reviewer", TOKENS.reviewer, `${rowsIn("Cases")} === 11`],
       [
         "readonly",
         TOKENS.readonly,
-        `${rowsIn("Cases")} === 10 && !document.querySelector('a[href="/cases/new"]')`,
+        `${rowsIn("Cases")} === 12 && !document.querySelector('a[href="/cases/new"]')`,
       ],
     ]) {
       await setPersona(token);
@@ -693,6 +704,45 @@ try {
     await S(`(S.must(S.button(S.tabsCard(), "Cancel"), "Cancel").click(), true)`);
   });
 
+  await group("case-10", async () => {
+    await navigate(
+      caseUrl(10),
+      `S.loaded() && S.has("US-CORC-2026-0010") && S.has("held back") && S.cards().length >= 8`,
+    );
+    await shoot("case-10-anticipated", {
+      note: "an anticipated SAE: the FDA IND rule held back, the EU clock still running",
+    });
+    await shootCard("rule-matches-anticipated", "Rule matches", {
+      note: "the FDA rule held back by the sponsor's designation, with the concept named",
+    });
+    await clickTab("Events");
+    await waitFor(
+      `S.has("Sponsor designation: anticipated in the study population")`,
+      "the events tab with the designation",
+    );
+    await shootClip("events-tab-anticipated", "S.rect(S.tabsCard())", {
+      note: "the event verdict with the anticipated designation and the concept from the plan",
+    });
+  });
+
+  await group("case-11", async () => {
+    await navigate(
+      caseUrl(11),
+      `S.loaded() && S.has("US-CORC-2026-0011") && S.cards().length >= 8`,
+    );
+    await clickTab("Assessments");
+    await waitFor(
+      `S.has("Investigator and sponsor differ on causality")`,
+      "the assessments tab with the disagreement",
+    );
+    await shoot("case-11-disagreement", {
+      note: "investigator related, sponsor not related: both opinions kept, the EU clock owed, the FDA rule not",
+    });
+    await shootClip("assessments-tab-disagreement", "S.rect(S.tabsCard())", {
+      note: "the assessments grid with both opinions and the disagreement notice",
+    });
+  });
+
   await group("reporting", async () => {
     await navigate(`${WEB}/reporting`, `S.loaded() && ${rowsIn("Expected submissions")} >= 1`);
     await shoot("reporting", { note: "expected submissions across studies, grouped by due date" });
@@ -713,8 +763,8 @@ try {
     await shootCard("dsur-sae-summary", "Cumulative SAE summary", {
       note: "SAE tabulation by SOC and arm",
     });
-    // The line listing is 88rem wide inside a 7xl main; widen the page for this one clip.
-    await page("Emulation.setDeviceMetricsOverride", { ...VIEWPORT, width: 1760 });
+    // The line listing is 100rem wide inside a 7xl main; widen the page for this one clip.
+    await page("Emulation.setDeviceMetricsOverride", { ...VIEWPORT, width: 1960 });
     await evaluate(`document.querySelector("main").style.maxWidth = "none"; true`);
     await sleep(400);
     await shootCard("dsur-sar-line-listing", "Serious adverse reactions", {
@@ -730,6 +780,7 @@ try {
       ["Studies", "admin-studies"],
       ["Sites", "admin-sites"],
       ["Products & RSI", "admin-products-rsi"],
+      ["Anticipated events", "admin-anticipated-events"],
       ["Destinations", "admin-destinations"],
       ["Reporting rules", "admin-reporting-rules"],
       ["People & grants", "admin-people-grants"],

@@ -5,6 +5,7 @@ import {
   Braces,
   EyeOff,
   FileClock,
+  FileDown,
   FileText,
   Layers,
   Link2,
@@ -28,6 +29,7 @@ import {
   can,
   type Me,
   openInNewTab,
+  receiptChannelLabel,
   type SignatureMeaning,
   useCase,
   useCaseAudit,
@@ -124,6 +126,22 @@ export default function CasePage() {
               icon={<Ban size={11} aria-hidden />}
             />
           )}
+          {c.any_anticipated && (
+            <Chip
+              label="anticipated SAE"
+              cssVar="--info"
+              hollow
+              title="The sponsor designated an event anticipated in the study population; rules that exclude anticipated events hold back their clock (aggregate review)"
+            />
+          )}
+          {c.any_causality_disagreement && (
+            <Chip
+              label="investigator and sponsor differ"
+              cssVar="--status-warn"
+              hollow
+              title="Investigator and sponsor recorded opposite causality opinions; both travel with the report"
+            />
+          )}
           <Chip
             label={`${versions.length} version${versions.length === 1 ? "" : "s"}`}
             cssVar="--muted"
@@ -138,6 +156,15 @@ export default function CasePage() {
             {c.study_title ? ` · ${c.study_title}` : ""}
           </span>
           <span className="text-muted">first received {fmtDate(c.first_received_date)}</span>
+          {(c.received_via || c.source_system) && (
+            <span className="text-muted">
+              received via{" "}
+              {receiptChannelLabel(c.received_via) ??
+                (c.source_system ? `${c.source_system} push` : "unrecorded channel")}
+              {c.received_ref ? ` · ${c.received_ref}` : ""}
+              {!c.received_ref && c.source_system && c.source_ref ? ` · ${c.source_ref}` : ""}
+            </span>
+          )}
           {c.next_due_date && (
             <span>
               next due <DaysRemaining days={c.days_remaining} due={c.next_due_date} />
@@ -183,6 +210,30 @@ export default function CasePage() {
             >
               <Braces size={12} aria-hidden />
               E2B JSON
+            </button>
+            <button
+              type="button"
+              className={buttonCls}
+              onClick={() => {
+                setOpenErr(null);
+                openInNewTab(`/case-versions/${v.id}/cioms1.pdf`).catch(setOpenErr);
+              }}
+              title="CIOMS I rendering of this version, each page naming the version hash (opens in a new tab)"
+            >
+              <FileDown size={12} aria-hidden />
+              CIOMS I (PDF)
+            </button>
+            <button
+              type="button"
+              className={buttonCls}
+              onClick={() => {
+                setOpenErr(null);
+                openInNewTab(`/case-versions/${v.id}/medwatch-3500a.pdf`).catch(setOpenErr);
+              }}
+              title="Form FDA 3500A rendering of this version, each page naming the version hash (opens in a new tab)"
+            >
+              <FileDown size={12} aria-hidden />
+              FDA 3500A (PDF)
             </button>
           </>
         }
@@ -517,7 +568,11 @@ function RuleMatches({ versionId, versionNumber }: { versionId: string; versionN
   return (
     <Card
       title="Rule matches"
-      aside={<span className="text-xs text-muted">why each rule applies to v{versionNumber}</span>}
+      aside={
+        <span className="text-xs text-muted">
+          why each rule applies to v{versionNumber}, and which one a designation held back
+        </span>
+      }
     >
       {!q.data ? (
         <div className="px-4 py-3">
@@ -539,15 +594,34 @@ function RuleMatches({ versionId, versionNumber }: { versionId: string; versionN
             </thead>
             <tbody className="divide-y divide-hairline">
               {q.data.map((m) => (
-                <tr key={`${m.reporting_rule_id}-${m.obligation_kind}`}>
+                <tr
+                  key={`${m.reporting_rule_id}-${m.obligation_kind}-${m.excluded_reason ?? "match"}`}
+                  className={m.excluded_reason ? "text-muted" : undefined}
+                >
                   <td className={tdCls}>
                     <div>{m.rule_name}</div>
                     {m.citation && <div className="text-xs text-muted">{m.citation}</div>}
+                    {m.excluded_reason === "anticipated" && (
+                      <div className="mt-1">
+                        <Chip
+                          label={`held back: anticipated in the study population${
+                            m.anticipated_labels ? ` (${m.anticipated_labels})` : ""
+                          }`}
+                          cssVar="--info"
+                          hollow
+                          title="This rule excludes events the sponsor designated anticipated; no clock runs, the event is reviewed in aggregate"
+                        />
+                      </div>
+                    )}
                   </td>
                   <td className={tdCls}>{m.destination_name}</td>
                   <td className={tdCls}>{humanize(m.obligation_kind)}</td>
-                  <td className={`${tdCls} mono text-right`}>{m.timeline_days} d</td>
-                  <td className={`${tdCls} mono`}>{fmtDate(m.clock_start_date)}</td>
+                  <td className={`${tdCls} mono text-right`}>
+                    {m.excluded_reason ? "no clock" : `${m.timeline_days} d`}
+                  </td>
+                  <td className={`${tdCls} mono`}>
+                    {m.excluded_reason ? "" : fmtDate(m.clock_start_date)}
+                  </td>
                 </tr>
               ))}
             </tbody>

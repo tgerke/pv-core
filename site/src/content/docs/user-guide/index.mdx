@@ -45,8 +45,9 @@ each time the page loads. Nothing needs to be remembered, refreshed, or reconcil
   on-time metrics per study and destination.
 - **DSUR**: the interval line listing of serious adverse reactions and the cumulative
   tabulation by system organ class and arm.
-- **Admin**: studies, sites, products and their reference safety information,
-  destinations, reporting rules, people and grants, dictionaries.
+- **Admin**: studies, sites, products and their reference safety information, each
+  study's anticipated serious adverse events, destinations, reporting rules, people and
+  grants, dictionaries.
 - **Audit**: the audit-chain status, every signature with its hash recomputed, and the
   raw event trail.
 
@@ -68,7 +69,7 @@ grants permit. The same queue, as each of the demo personas:
   <TabItem label="Administrator">
     <Shot
       src={queue}
-      alt="The queue as Dana Whitfield, CRO administrator: all ten cases across both sponsors, the New case button, and the Admin and Audit pages in the header."
+      alt="The queue as Dana Whitfield, CRO administrator: all twelve cases across both sponsors, the New case button, and the Admin and Audit pages in the header."
     />
     Dana Whitfield, CRO administrator: everything, across both sponsors, including the
     Admin and Audit pages.
@@ -76,7 +77,7 @@ grants permit. The same queue, as each of the demo personas:
   <TabItem label="Case processor">
     <Shot
       src={queueProcessor}
-      alt="The queue as Marcus Lee, case processor: nine cases, all from the main sponsor; the Northlake case is not listed."
+      alt="The queue as Marcus Lee, case processor: eleven cases, all from the main sponsor; the Northlake case is not listed."
     />
     Marcus Lee, case processor: intake, data entry, follow-ups, submissions and
     acknowledgements, for the main sponsor only. The second sponsor's case is not in his
@@ -85,7 +86,7 @@ grants permit. The same queue, as each of the demo personas:
   <TabItem label="Medical reviewer">
     <Shot
       src={queueReviewer}
-      alt="The queue as Priya Raman MD, medical reviewer: nine cases from the main sponsor; the second sponsor's case is absent."
+      alt="The queue as Priya Raman MD, medical reviewer: eleven cases from the main sponsor; the second sponsor's case is absent."
     />
     Priya Raman MD, safety physician: assessments, expectedness overrides, unblinding
     facts, waivers, and signing, for the main sponsor only. On a case page her action bar
@@ -94,7 +95,7 @@ grants permit. The same queue, as each of the demo personas:
   <TabItem label="Auditor">
     <Shot
       src={queueReadonly}
-      alt="The queue as Sam Okafor, auditor: all ten cases and no New case button; every write action is absent throughout the app."
+      alt="The queue as Sam Okafor, auditor: all twelve cases and no New case button; every write action is absent throughout the app."
     />
     Sam Okafor, auditor: read everything, change nothing. Every action button is absent
     rather than disabled, and the API would answer 403 to any write.
@@ -109,4 +110,6 @@ grants permit. The same queue, as each of the demo personas:
   </TabItem>
 </Tabs>
 
-Continue with [intake and data entry](/pv-core/user-guide/intake-and-data-entry/).
+Continue with [intake and data entry](/pv-core/user-guide/intake-and-data-entry/). If you
+came here with the question of what is event data, what is the sponsor's judgment, and what
+is operational bookkeeping, start with [what lives where](/pv-core/user-guide/what-lives-where/).

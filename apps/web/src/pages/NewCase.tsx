@@ -3,6 +3,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   can,
+  RECEIPT_CHANNELS,
+  type ReceiptChannel,
   type Study,
   useCreateCase,
   useDictionaries,
@@ -46,6 +48,8 @@ export default function NewCase({ study: selectedStudy }: { study: Study | undef
   const [firstReceived, setFirstReceived] = useState(today);
   const [awareness, setAwareness] = useState(today);
   const [rationale, setRationale] = useState("");
+  const [receivedVia, setReceivedVia] = useState<ReceiptChannel | "">("");
+  const [receivedRef, setReceivedRef] = useState("");
   const [patient, setPatient] = useState(emptyPatient);
   const [sources, setSources] = useState(() => [emptySource(true)]);
   const [events, setEvents] = useState<EventDraft[]>(() => [emptyEvent()]);
@@ -83,6 +87,8 @@ export default function NewCase({ study: selectedStudy }: { study: Study | undef
         info_received_date: firstReceived,
         awareness_date: awareness || firstReceived,
         awareness_rationale: needsRationale ? rationale.trim() : null,
+        received_via: receivedVia || null,
+        received_ref: receivedRef.trim() || null,
         ...(dictionary ? { dictionary_id: dictionary.id } : {}),
         patient: patientBody(patient),
         sources: sourcesBody(sources),
@@ -176,6 +182,28 @@ export default function NewCase({ study: selectedStudy }: { study: Study | undef
                   onChange={(e) => setAwareness(e.target.value)}
                   className={inputCls}
                   required
+                />
+              </Field>
+              <Field label="Received via" hint="how the report reached us">
+                <select
+                  value={receivedVia}
+                  onChange={(e) => setReceivedVia(e.target.value as ReceiptChannel | "")}
+                  className={inputCls}
+                >
+                  <option value="">not recorded</option>
+                  {RECEIPT_CHANNELS.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Reference" hint="message id, fax cover, call log">
+                <input
+                  value={receivedRef}
+                  onChange={(e) => setReceivedRef(e.target.value)}
+                  className={`w-64 ${inputCls}`}
+                  placeholder="e.g. SAE-2201-002-031-1"
                 />
               </Field>
               {needsRationale && (

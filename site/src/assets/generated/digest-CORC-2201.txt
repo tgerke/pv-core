@@ -17,5 +17,11 @@ Intake items not yet a valid ICSR (1)
 In medical review for more than 3 days (1)
   - US-CORC-2026-0002: 15d clock, SUSAR
 
-Standing counts: 6 cases; 10 open obligations; 2 submitted awaiting acknowledgement; 1 acknowledged; on-time rate 50%.
-Audit chain verified: 254 events.
+Investigator and sponsor differ on causality (both opinions travel with the report) (1)
+  - US-CORC-2026-0011: medical review, SUSAR
+
+Anticipated serious adverse events held from individual IND safety reporting (aggregate review) (1)
+  - US-CORC-2026-0010: Skeletal complications of bone metastases; 2 other obligations still open
+
+Standing counts: 8 cases; 14 open obligations; 2 submitted awaiting acknowledgement; 1 acknowledged; on-time rate 50%.
+Audit chain verified: 287 events.

@@ -1,6 +1,7 @@
 import { PenLine, TriangleAlert } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import {
+  type AnticipatedEvent,
   type AssessmentBody,
   type Assessor,
   type CaseAssessment,
@@ -10,8 +11,10 @@ import {
   type Expectedness,
   type Rechallenge,
   type SectionsBody,
+  useAnticipatedEvents,
   useStudy,
   useUpdateAssessments,
+  useUpdateDesignations,
   useUpdateSections,
 } from "../api";
 import {
@@ -43,6 +46,7 @@ import {
   fmtDate,
   humanize,
   inputCls,
+  Notice,
   Tabs,
   tdCls,
   thCls,
@@ -110,7 +114,14 @@ export function SectionTabs({
       <div key={v.id} className="px-4 py-3">
         {tab === "sources" && <SourcesTab v={v} editable={edit} />}
         {tab === "patient" && <PatientTab v={v} editable={edit} sites={sites} />}
-        {tab === "events" && <EventsTab v={v} editable={edit} />}
+        {tab === "events" && (
+          <EventsTab
+            v={v}
+            editable={edit}
+            studyId={c.study_id}
+            canDesignate={editable && canAssess}
+          />
+        )}
         {tab === "drugs" && (
           <DrugsTab v={v} editable={edit} products={products} studyBlinded={!!c.is_blinded} />
         )}
@@ -342,11 +353,220 @@ function EventVerdict({ e }: { e: CaseEvent }) {
           icon={<TriangleAlert size={11} aria-hidden />}
         />
       )}
+      {e.causality_disagreement && (
+        <Chip
+          label="investigator and sponsor differ"
+          cssVar="--status-warn"
+          hollow
+          title="Both opinions stay on the record and travel with the report; which one starts a clock is each rule's causality basis"
+        />
+      )}
+      {e.anticipated && (
+        <Chip
+          label={`anticipated in the study population${
+            e.anticipated_plan_reference ? ` · ${e.anticipated_plan_reference}` : ""
+          }`}
+          cssVar="--info"
+          title={`${e.anticipated_label ?? "anticipated"}${
+            e.anticipated_basis === "added_during_trial" ? " (concept added during the trial)" : ""
+          }: not reported to FDA as an individual IND safety report; reviewed in aggregate`}
+        />
+      )}
+      {!e.anticipated && !e.designation_id && e.anticipated_candidate && (
+        <Chip
+          label="PT is on the study's anticipated-event list"
+          cssVar="--muted"
+          hollow
+          title="A hint for the sponsor's review, not a designation"
+        />
+      )}
     </div>
   );
 }
 
-function EventsTab({ v, editable }: { v: CaseVersion; editable: boolean }) {
+const inEffectOn = (concepts: AnticipatedEvent[], day: string) =>
+  concepts.filter((c) => c.effective_from <= day && (!c.effective_to || c.effective_to >= day));
+
+/**
+ * The sponsor's per-event designation: anticipated in the study population
+ * (naming a concept on the study's list) or explicitly not. Sponsor-only; the
+ * server gates it with `assess`.
+ */
+function DesignationsPanel({
+  v,
+  studyId,
+  canDesignate,
+}: {
+  v: CaseVersion;
+  studyId: string | null;
+  canDesignate: boolean;
+}) {
+  const concepts = useAnticipatedEvents(studyId ?? undefined);
+  const update = useUpdateDesignations();
+  const [draft, setDraft] = useState<Record<number, { choice: string; rationale: string }> | null>(
+    null,
+  );
+  const [err, setErr] = useState<unknown>(null);
+  if (!studyId) return null;
+  const inEffect = inEffectOn(concepts.data ?? [], v.awareness_date);
+  const designated = v.events.filter((e) => e.designation_id);
+  if (!canDesignate && designated.length === 0) return null;
+  const startEdit = () =>
+    setDraft(
+      Object.fromEntries(
+        v.events.map((e) => [
+          e.seq,
+          {
+            choice: e.designation_id ? (e.anticipated ? (e.anticipated_event_id ?? "") : "no") : "",
+            rationale: e.designation_rationale ?? "",
+          },
+        ]),
+      ),
+    );
+  const onSave = () => {
+    if (!draft) return;
+    setErr(null);
+    update.mutate(
+      {
+        versionId: v.id,
+        designations: v.events
+          .filter((e) => (draft[e.seq]?.choice ?? "") !== "")
+          .map((e) => ({
+            event_seq: e.seq,
+            anticipated: draft[e.seq]!.choice !== "no",
+            anticipated_event_id: draft[e.seq]!.choice === "no" ? null : draft[e.seq]!.choice,
+            rationale: draft[e.seq]!.rationale.trim() || null,
+          })),
+      },
+      { onError: setErr, onSuccess: () => setDraft(null) },
+    );
+  };
+  return (
+    <div className="mt-4 space-y-2 rounded-md border border-hairline p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <h3 className="text-sm font-medium">
+          Sponsor designation: anticipated in the study population
+        </h3>
+        {canDesignate && !draft && (
+          <button type="button" onClick={startEdit} className={buttonCls}>
+            <PenLine size={12} aria-hidden />
+            Designate
+          </button>
+        )}
+        {draft && (
+          <>
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={update.isPending}
+              className={buttonCls}
+            >
+              {update.isPending ? "Saving…" : "Save"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDraft(null);
+                setErr(null);
+              }}
+              disabled={update.isPending}
+              className={buttonCls}
+            >
+              Cancel
+            </button>
+          </>
+        )}
+        <ErrorNote error={err} />
+      </div>
+      <p className="text-xs text-muted">
+        An event the sponsor designates anticipated (a consequence of the disease or the population,
+        listed in the safety surveillance plan) is held back from every rule that excludes
+        anticipated events and reviewed in aggregate; other rules run as usual. Distinct from
+        expectedness, which is judged against the RSI.
+        {inEffect.length === 0 &&
+          " This study lists no anticipated-event concept in effect on the awareness date."}
+      </p>
+      {draft ? (
+        <ul className="space-y-2">
+          {v.events.map((e) => {
+            const d = draft[e.seq] ?? { choice: "", rationale: "" };
+            const set = (patch: Partial<typeof d>) =>
+              setDraft((cur) => (cur ? { ...cur, [e.seq]: { ...d, ...patch } } : cur));
+            return (
+              <li key={e.id} className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="mono text-xs text-muted">#{e.seq}</span>
+                <span className="font-medium">{e.pt_term ?? e.reported_term}</span>
+                <select
+                  value={d.choice}
+                  onChange={(ev) => set({ choice: ev.target.value })}
+                  className={inputCls}
+                  aria-label={`Designation for event ${e.seq}`}
+                >
+                  <option value="">no designation</option>
+                  <option value="no">not anticipated</option>
+                  {inEffect.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      anticipated: {c.label}
+                      {c.plan_reference ? ` (${c.plan_reference})` : ""}
+                      {c.terms?.some((t) => t.pt_code === e.pt_code) ? " · PT on the list" : ""}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  value={d.rationale}
+                  onChange={(ev) => set({ rationale: ev.target.value })}
+                  placeholder="rationale (optional)"
+                  className={`w-80 ${inputCls}`}
+                  aria-label={`Designation rationale for event ${e.seq}`}
+                />
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <ul className="space-y-1 text-sm">
+          {v.events.map((e) => (
+            <li key={e.id} className="flex flex-wrap items-baseline gap-x-2">
+              <span className="mono text-xs text-muted">#{e.seq}</span>
+              <span>{e.pt_term ?? e.reported_term}:</span>
+              {e.designation_id ? (
+                e.anticipated ? (
+                  <span>
+                    <span className="font-medium">anticipated</span>
+                    {e.anticipated_label ? ` · ${e.anticipated_label}` : ""}
+                    {e.anticipated_plan_reference ? ` (${e.anticipated_plan_reference})` : ""}
+                    {e.anticipated_basis === "added_during_trial"
+                      ? " · added during the trial"
+                      : ""}
+                  </span>
+                ) : (
+                  <span>not anticipated</span>
+                )
+              ) : (
+                <span className="text-muted">no designation</span>
+              )}
+              {e.designation_rationale && (
+                <span className="text-xs text-ink2">— {e.designation_rationale}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function EventsTab({
+  v,
+  editable,
+  studyId,
+  canDesignate,
+}: {
+  v: CaseVersion;
+  editable: boolean;
+  studyId: string | null;
+  canDesignate: boolean;
+}) {
   const [draft, setDraft] = useState<ReturnType<typeof eventFromRow>[] | null>(null);
   const { save, saving, err, setErr } = useSectionSave(v.id);
   return (
@@ -410,6 +630,9 @@ function EventsTab({ v, editable }: { v: CaseVersion; editable: boolean }) {
             );
           })}
         </ul>
+      )}
+      {!draft && v.events.length > 0 && (
+        <DesignationsPanel v={v} studyId={studyId} canDesignate={canDesignate} />
       )}
     </Section>
   );
@@ -611,6 +834,15 @@ function AssessmentsTab({ v, editable }: { v: CaseVersion; editable: boolean }) 
         Reasonable possibility of a causal relationship, per drug, event, and assessor. An
         expectedness override replaces the RSI-derived verdict and needs a rationale.
       </p>
+      {v.any_causality_disagreement && (
+        <Notice tone="warn">
+          Investigator and sponsor differ on causality. Both opinions stay on the record and travel
+          with the report; the sponsor never edits the reporter's row. Which opinion starts a clock
+          is each rule's causality basis (the FDA IND rules use the sponsor's, ICH E2A and the EU
+          rules either party's). To ask the site to reconsider, query it through the EDC or by
+          letter; the answer arrives as follow-up information and opens a new version.
+        </Notice>
+      )}
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>

@@ -22,14 +22,14 @@ cp .env.example .env
 pnpm install
 pnpm db:up        # Postgres 16 on :5436, MinIO, mailpit
 pnpm db:migrate
-pnpm db:seed      # two sponsors, three trials, ten cases
+pnpm db:seed      # two sponsors, three trials, twelve cases
 pnpm dev          # API on :8789, web on :5176
 ```
 
 Open `http://localhost:5176` for the case queue and `http://localhost:8789/docs` for the
 interactive API reference.
 
-![The case queue on first load: ten seeded cases across two sponsors, overdue clocks first, with stat tiles for overdue obligations, cases due within three days, intake items, and cases awaiting medical review.](../../assets/screenshots/queue.webp)
+![The case queue on first load: twelve seeded cases across two sponsors, overdue clocks first, with stat tiles for overdue obligations, cases due within three days, intake items, cases awaiting medical review, investigator/sponsor disagreements, and anticipated SAEs under aggregate review.](../../assets/screenshots/queue.webp)
 
 ![The interactive API reference: every route with its parameters and response schema, and a try-it panel that takes a dev token.](../../assets/screenshots/api-docs.webp)
 

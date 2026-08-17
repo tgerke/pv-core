@@ -19,9 +19,13 @@ reaction, onset and outcome, causality as assessed by reporter and sponsor, expe
 and the RSI version it was judged against, and any other serious reactions on the same
 case. Only cases that are valid ICSRs and not nullified appear; a case is a reaction if
 either the reporter or the sponsor considers it related, or if it has not been assessed
-yet.
+yet. The last column is the sponsor's comment, which E2F §3.7.2(l) reserves for the
+sponsor's causality view when it differs from the reporter's; it also names the
+anticipated concept when the sponsor designated the event anticipated in the study
+population, so an anticipated SAE is listed like any other reaction, with the reason it
+was not reported individually to FDA beside it.
 
-![The line listing in full width: case, study, subject, sex and age, country, arm, suspect drugs, PT, SOC, onset, outcome, seriousness, reporter related, sponsor related, expectedness, RSI, and other serious reactions.](../../../assets/screenshots/dsur-sar-line-listing.webp)
+![The line listing in full width: case, study, subject, sex and age, country, arm, suspect drugs, PT, SOC, onset, outcome, seriousness, reporter related, sponsor related, expectedness, RSI, other serious reactions, and the sponsor comment.](../../../assets/screenshots/dsur-sar-line-listing.webp)
 
 ## SAE tabulation
 

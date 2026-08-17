@@ -1,4 +1,10 @@
 {
+  "admin-anticipated-events.webp": {
+    "persona": "admin",
+    "url": "/admin",
+    "kind": "section",
+    "note": "Admin › Anticipated events"
+  },
   "admin-destinations.webp": {
     "persona": "admin",
     "url": "/admin",
@@ -47,21 +53,27 @@
     "kind": "page",
     "note": "the interactive API reference"
   },
+  "assessments-tab-disagreement.webp": {
+    "persona": "admin",
+    "url": "/cases/22e751cd-2f56-4232-8338-dbef19b90716",
+    "kind": "section",
+    "note": "the assessments grid with both opinions and the disagreement notice"
+  },
   "assessments-tab.webp": {
     "persona": "admin",
-    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "url": "/cases/f8eb5e00-8df0-4cb5-abb1-bc2fd3f76ccc",
     "kind": "section",
     "note": "the drug × event × assessor grid"
   },
   "attachments-card.webp": {
     "persona": "admin",
-    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "url": "/cases/f8eb5e00-8df0-4cb5-abb1-bc2fd3f76ccc",
     "kind": "section",
     "note": "content-addressed source documents"
   },
   "audit-trail-card.webp": {
     "persona": "admin",
-    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "url": "/cases/f8eb5e00-8df0-4cb5-abb1-bc2fd3f76ccc",
     "kind": "section",
     "note": "hash-chained rows, one 'what changed' expanded"
   },
@@ -73,85 +85,97 @@
   },
   "case-1-approved.webp": {
     "persona": "admin",
-    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "url": "/cases/f8eb5e00-8df0-4cb5-abb1-bc2fd3f76ccc",
     "kind": "page",
     "note": "approved, locked, 7-day clocks due in three days"
   },
+  "case-10-anticipated.webp": {
+    "persona": "admin",
+    "url": "/cases/dbbc146d-569a-436c-87fe-c24f90b99cee",
+    "kind": "page",
+    "note": "an anticipated SAE: the FDA IND rule held back, the EU clock still running"
+  },
+  "case-11-disagreement.webp": {
+    "persona": "admin",
+    "url": "/cases/22e751cd-2f56-4232-8338-dbef19b90716",
+    "kind": "page",
+    "note": "investigator related, sponsor not related: both opinions kept, the EU clock owed, the FDA rule not"
+  },
   "case-2-medical-review.webp": {
     "persona": "admin",
-    "url": "/cases/6f7153cc-82a1-4d6b-a8f8-3e6769017db3",
+    "url": "/cases/562586ba-2674-482c-8622-48b62e507ec5",
     "kind": "page",
     "note": "medical review, 15-day clocks overdue"
   },
   "case-4-serious-expected.webp": {
     "persona": "admin",
-    "url": "/cases/25c8dbc5-334e-4e84-b8e5-4acaa22c26ee",
+    "url": "/cases/a23b5f25-ebb2-4157-9219-d127b40eb2bb",
     "kind": "page",
     "note": "serious but expected: no clock"
   },
   "case-5-data-entry.webp": {
     "persona": "admin",
-    "url": "/cases/2530c716-96f0-4efd-9acb-9fe8fe00af82",
+    "url": "/cases/4eeaaf29-21db-4813-8e2b-e7ad7acff285",
     "kind": "page",
     "note": "data entry, non-serious, sponsor causality unassessed"
   },
   "case-6-follow-up-v2.webp": {
     "persona": "admin",
-    "url": "/cases/a1e60030-5a4d-40fb-bee5-4626ae4e89ed",
+    "url": "/cases/97e97ac7-97ec-4343-a9ba-0a69087330e6",
     "kind": "page",
     "note": "v2 follow-up open, v1 locked and submitted"
   },
   "case-7-nullified.webp": {
     "persona": "admin",
-    "url": "/cases/d9027e63-df13-42e2-bdfc-8c330324a671",
+    "url": "/cases/667e4b53-7bbb-464b-844a-d06a3e0dbec9",
     "kind": "page",
     "note": "a nullified duplicate"
   },
   "case-8-waived-placebo.webp": {
     "persona": "admin",
-    "url": "/cases/3e81b65d-0080-48e2-8bb9-d1a2aad01db7",
+    "url": "/cases/a9b6333c-0fff-4358-95ac-f350db1f10c2",
     "kind": "page",
     "note": "unblinded to placebo, obligations waived"
   },
   "case-9-intake.webp": {
     "persona": "admin",
-    "url": "/cases/c5ad8be4-12c3-4afa-b655-f9a5c390c01d",
+    "url": "/cases/cb05257f-dc60-48c8-8f19-d3a47bc7251b",
     "kind": "page",
     "note": "an intake item from the EDC, below the minimum criteria"
   },
   "dialog-nullify.webp": {
     "persona": "admin",
-    "url": "/cases/2530c716-96f0-4efd-9acb-9fe8fe00af82",
+    "url": "/cases/4eeaaf29-21db-4813-8e2b-e7ad7acff285",
     "kind": "dialog",
     "note": "the nullification dialog, never confirmed"
   },
   "dialog-open-follow-up.webp": {
     "persona": "admin",
-    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "url": "/cases/f8eb5e00-8df0-4cb5-abb1-bc2fd3f76ccc",
     "kind": "dialog",
     "note": "the follow-up dialog, never confirmed"
   },
   "dialog-record-submission.webp": {
     "persona": "admin",
-    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "url": "/cases/f8eb5e00-8df0-4cb5-abb1-bc2fd3f76ccc",
     "kind": "dialog",
     "note": "destination, kind, format; never confirmed"
   },
   "dialog-record-unblinding.webp": {
     "persona": "admin",
-    "url": "/cases/6f7153cc-82a1-4d6b-a8f8-3e6769017db3",
+    "url": "/cases/562586ba-2674-482c-8622-48b62e507ec5",
     "kind": "dialog",
     "note": "the unblinding fact dialog, never confirmed"
   },
   "dialog-sign-medical-review.webp": {
     "persona": "reviewer",
-    "url": "/cases/6f7153cc-82a1-4d6b-a8f8-3e6769017db3",
+    "url": "/cases/562586ba-2674-482c-8622-48b62e507ec5",
     "kind": "dialog",
     "note": "signing asks for re-authentication; never confirmed"
   },
   "drugs-tab.webp": {
     "persona": "admin",
-    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "url": "/cases/f8eb5e00-8df0-4cb5-abb1-bc2fd3f76ccc",
     "kind": "section",
     "note": "the Drugs section, study product marked blinded"
   },
@@ -173,21 +197,27 @@
     "kind": "page",
     "note": "the DSUR page"
   },
+  "events-tab-anticipated.webp": {
+    "persona": "admin",
+    "url": "/cases/dbbc146d-569a-436c-87fe-c24f90b99cee",
+    "kind": "section",
+    "note": "the event verdict with the anticipated designation and the concept from the plan"
+  },
   "events-tab-editing-typeahead.webp": {
     "persona": "admin",
-    "url": "/cases/2530c716-96f0-4efd-9acb-9fe8fe00af82",
+    "url": "/cases/4eeaaf29-21db-4813-8e2b-e7ad7acff285",
     "kind": "section",
     "note": "editing an event: the MedDRA typeahead over the loaded dictionary"
   },
   "events-tab.webp": {
     "persona": "admin",
-    "url": "/cases/6f7153cc-82a1-4d6b-a8f8-3e6769017db3",
+    "url": "/cases/562586ba-2674-482c-8622-48b62e507ec5",
     "kind": "section",
     "note": "coded event with seriousness, expectedness, causality"
   },
   "facts-card.webp": {
     "persona": "admin",
-    "url": "/cases/3e81b65d-0080-48e2-8bb9-d1a2aad01db7",
+    "url": "/cases/a9b6333c-0fff-4358-95ac-f350db1f10c2",
     "kind": "section",
     "note": "the unblinding fact with its source reference"
   },
@@ -223,13 +253,13 @@
   },
   "obligations-card.webp": {
     "persona": "admin",
-    "url": "/cases/6f7153cc-82a1-4d6b-a8f8-3e6769017db3",
+    "url": "/cases/562586ba-2674-482c-8622-48b62e507ec5",
     "kind": "section",
     "note": "three overdue obligations"
   },
   "patient-tab.webp": {
     "persona": "admin",
-    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "url": "/cases/f8eb5e00-8df0-4cb5-abb1-bc2fd3f76ccc",
     "kind": "section",
     "note": "the Patient section"
   },
@@ -281,15 +311,21 @@
     "kind": "page",
     "note": "expected submissions across studies, grouped by due date"
   },
+  "rule-matches-anticipated.webp": {
+    "persona": "admin",
+    "url": "/cases/dbbc146d-569a-436c-87fe-c24f90b99cee",
+    "kind": "section",
+    "note": "the FDA rule held back by the sponsor's designation, with the concept named"
+  },
   "rule-matches-card.webp": {
     "persona": "admin",
-    "url": "/cases/6f7153cc-82a1-4d6b-a8f8-3e6769017db3",
+    "url": "/cases/562586ba-2674-482c-8622-48b62e507ec5",
     "kind": "section",
     "note": "why each rule applies"
   },
   "signatures-card.webp": {
     "persona": "admin",
-    "url": "/cases/278812c6-dc79-41a4-bfdb-1c2dc484408e",
+    "url": "/cases/f8eb5e00-8df0-4cb5-abb1-bc2fd3f76ccc",
     "kind": "section",
     "note": "medical review and approval, hash matches"
   },
@@ -301,25 +337,25 @@
   },
   "submissions-card.webp": {
     "persona": "admin",
-    "url": "/cases/a1e60030-5a4d-40fb-bee5-4626ae4e89ed",
+    "url": "/cases/97e97ac7-97ec-4343-a9ba-0a69087330e6",
     "kind": "section",
     "note": "three submissions of v1, one acknowledged"
   },
   "submissions-record-ack.webp": {
     "persona": "admin",
-    "url": "/cases/a1e60030-5a4d-40fb-bee5-4626ae4e89ed",
+    "url": "/cases/97e97ac7-97ec-4343-a9ba-0a69087330e6",
     "kind": "section",
     "note": "recording an acknowledgement, never saved"
   },
   "version-card-v1.webp": {
     "persona": "admin",
-    "url": "/cases/a1e60030-5a4d-40fb-bee5-4626ae4e89ed",
+    "url": "/cases/97e97ac7-97ec-4343-a9ba-0a69087330e6",
     "kind": "section",
     "note": "the locked initial version"
   },
   "version-card.webp": {
     "persona": "admin",
-    "url": "/cases/a1e60030-5a4d-40fb-bee5-4626ae4e89ed",
+    "url": "/cases/97e97ac7-97ec-4343-a9ba-0a69087330e6",
     "kind": "section",
     "note": "version toggles and the E2B JSON export"
   }

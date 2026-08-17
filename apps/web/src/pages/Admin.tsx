@@ -3,6 +3,8 @@ import { useState } from "react";
 import {
   ACCESS_ROLE_LABEL,
   type AccessRole,
+  type AnticipatedEvent,
+  type AnticipatedRateUnit,
   type CausalityBasis,
   type CreateRuleBody,
   can,
@@ -15,6 +17,8 @@ import {
   type SubmissionFormat,
   type SubmissionKind,
   useAddRsiVersion,
+  useAnticipatedEvents,
+  useCreateAnticipatedEvent,
   useCreateDestination,
   useCreateOrganization,
   useCreatePerson,
@@ -24,6 +28,7 @@ import {
   useCreateStudy,
   useDestinations,
   useDictionaries,
+  useEndAnticipatedEvent,
   useEndRsiVersion,
   useEndRule,
   useGrantAccess,
@@ -67,6 +72,7 @@ type TabId =
   | "studies"
   | "sites"
   | "products"
+  | "anticipated"
   | "destinations"
   | "rules"
   | "people"
@@ -75,6 +81,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "studies", label: "Studies" },
   { id: "sites", label: "Sites" },
   { id: "products", label: "Products & RSI" },
+  { id: "anticipated", label: "Anticipated events" },
   { id: "destinations", label: "Destinations" },
   { id: "rules", label: "Reporting rules" },
   { id: "people", label: "People & grants" },
@@ -104,8 +111,9 @@ export default function Admin() {
         <h1 className="text-xl font-semibold">Administration</h1>
         <p className="mt-1 max-w-3xl text-sm text-ink2">
           Reference data behind the engine: studies, sites, products and their reference safety
-          information, destinations, reporting rules, people, and dictionaries. Endings are dated
-          facts, never deletes; every write is an audited row.
+          information, each study's anticipated serious adverse events, destinations, reporting
+          rules, people, and dictionaries. Endings are dated facts, never deletes; every write is an
+          audited row.
         </p>
       </div>
       {!isPending && !admin && (
@@ -123,6 +131,7 @@ export default function Admin() {
           {tab === "studies" && <StudiesTab admin={admin} />}
           {tab === "sites" && <SitesTab admin={admin} />}
           {tab === "products" && <ProductsTab admin={admin} />}
+          {tab === "anticipated" && <AnticipatedTab admin={admin} />}
           {tab === "destinations" && <DestinationsTab admin={admin} />}
           {tab === "rules" && <RulesTab admin={admin} />}
           {tab === "people" && <PeopleTab admin={admin} />}
@@ -873,6 +882,370 @@ function RsiDialog({ product, onClose }: { product: Product; onClose: () => void
   );
 }
 
+// --- Anticipated serious adverse events ------------------------------------------------------------
+
+const RATE_UNITS: { value: AnticipatedRateUnit; label: string }[] = [
+  { value: "per_100_participant_years", label: "per 100 participant-years" },
+  { value: "proportion", label: "proportion of participants" },
+];
+
+function AnticipatedTab({ admin }: { admin: boolean }) {
+  const q = useAnticipatedEvents();
+  const { data: studies } = useStudies();
+  const end = useEndAnticipatedEvent();
+  const [adding, setAdding] = useState<string | null>(null); // study id
+  const [err, setErr] = useState<unknown>(null);
+  const today = localToday();
+  const byStudy = new Map<string, AnticipatedEvent[]>();
+  for (const ae of q.data ?? [])
+    byStudy.set(ae.study_id, [...(byStudy.get(ae.study_id) ?? []), ae]);
+  const visibleStudies = (studies ?? []).filter(
+    (st) => st.protocol_number !== "CORC-9999" || byStudy.has(st.id),
+  );
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-muted">
+        Serious adverse events the safety surveillance plan anticipates in the study population
+        independent of the drug: one medical concept per row, its MedDRA preferred terms, and the
+        plan reference or, for a concept added during the trial, the clinical justification. The
+        sponsor designates events against this list on the case; a rule that excludes anticipated
+        events holds its clock back for aggregate review. Distinct from the RSI, which decides
+        expectedness. A predicted rate is optional and never stored without its basis.
+      </p>
+      {!q.data ? (
+        <PageState query={q} label="anticipated events" />
+      ) : (
+        <ul className="divide-y divide-hairline">
+          {visibleStudies.map((st) => {
+            const list = byStudy.get(st.id) ?? [];
+            return (
+              <li key={st.id} className="space-y-2 py-3 first:pt-0">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="font-medium">{st.protocol_number}</span>
+                  <span className="text-xs text-ink2">{st.title}</span>
+                  {admin && (
+                    <button
+                      type="button"
+                      className={`ml-auto ${buttonCls}`}
+                      onClick={() => setAdding(st.id)}
+                    >
+                      <ListPlus size={12} aria-hidden />
+                      Add concept
+                    </button>
+                  )}
+                </div>
+                {list.length === 0 ? (
+                  <p className="text-xs text-muted">
+                    No anticipated-event list: every SAE is assessed for individual reporting.
+                  </p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {list.map((ae) => (
+                      <li
+                        key={ae.id}
+                        className={`rounded-md border border-hairline px-3 py-2 text-sm ${ae.effective_to ? "opacity-60" : ""}`}
+                      >
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                          <span className="font-medium">{ae.label}</span>
+                          <span className="text-xs text-ink2">
+                            {ae.prespecified
+                              ? `prespecified · ${ae.plan_reference ?? ""}`
+                              : "added during the trial"}
+                          </span>
+                          <span className="mono text-xs text-muted">
+                            {fmtDate(ae.effective_from)} →{" "}
+                            {ae.effective_to ? fmtDate(ae.effective_to) : "open"}
+                          </span>
+                          {ae.approved_by_name && (
+                            <span className="text-xs text-muted">
+                              approved by {ae.approved_by_name}
+                            </span>
+                          )}
+                          {admin && !ae.effective_to && (
+                            <button
+                              type="button"
+                              className={`ml-auto ${buttonCls}`}
+                              disabled={end.isPending}
+                              onClick={() => {
+                                setErr(null);
+                                end.mutate(
+                                  { anticipatedEventId: ae.id, effective_to: today },
+                                  { onError: setErr },
+                                );
+                              }}
+                              title="End this concept today (its one permitted mutation)"
+                            >
+                              <Power size={12} aria-hidden />
+                              End today
+                            </button>
+                          )}
+                        </div>
+                        {!ae.prespecified && ae.justification && (
+                          <p className="mt-1 text-xs text-ink2">{ae.justification}</p>
+                        )}
+                        <p className="mt-1 text-xs text-ink2">
+                          {ae.predicted_rate !== null
+                            ? `Predicted rate ${ae.predicted_rate} ${
+                                RATE_UNITS.find((u) => u.value === ae.rate_unit)?.label ??
+                                ae.rate_unit
+                              } · basis: ${ae.rate_basis}`
+                            : "No predicted rate recorded"}
+                        </p>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {(ae.terms ?? []).map((t) => (
+                            <Chip
+                              key={t.pt_code}
+                              label={t.pt_term}
+                              cssVar="--muted"
+                              hollow
+                              title={`PT ${t.pt_code}`}
+                            />
+                          ))}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <ErrorNote error={err} />
+      {adding && (
+        <AnticipatedDialog
+          studyId={adding}
+          protocol={studies?.find((st) => st.id === adding)?.protocol_number ?? ""}
+          onClose={() => setAdding(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function AnticipatedDialog({
+  studyId,
+  protocol,
+  onClose,
+}: {
+  studyId: string;
+  protocol: string;
+  onClose: () => void;
+}) {
+  const { data: dictionaries } = useDictionaries();
+  const create = useCreateAnticipatedEvent();
+  const [label, setLabel] = useState("");
+  const [prespecified, setPrespecified] = useState(true);
+  const [planReference, setPlanReference] = useState("");
+  const [justification, setJustification] = useState("");
+  const [rate, setRate] = useState("");
+  const [rateUnit, setRateUnit] = useState<AnticipatedRateUnit>("per_100_participant_years");
+  const [rateBasis, setRateBasis] = useState("");
+  const [from, setFrom] = useState(localToday());
+  const [dictionaryId, setDictionaryId] = useState("");
+  const [terms, setTerms] = useState<{ pt_code: string; pt_term: string }[]>([]);
+  const [err, setErr] = useState<unknown>(null);
+  const dict =
+    dictionaryId || dictionaries?.find((d) => d.is_default)?.id || dictionaries?.[0]?.id || "";
+  const rateNumber = rate.trim() === "" ? null : Number(rate);
+  const rateInvalid = rateNumber !== null && (Number.isNaN(rateNumber) || rateNumber < 0);
+  const ready =
+    label.trim() &&
+    from &&
+    dict &&
+    terms.length > 0 &&
+    (prespecified ? planReference.trim() : justification.trim()) &&
+    !rateInvalid &&
+    (rateNumber === null || rateBasis.trim());
+  return (
+    <Dialog
+      title={`Add an anticipated serious adverse event to ${protocol}`}
+      onClose={onClose}
+      wide
+    >
+      <form
+        className="space-y-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!ready) return;
+          setErr(null);
+          create.mutate(
+            {
+              study_id: studyId,
+              label: label.trim(),
+              prespecified,
+              plan_reference: prespecified ? planReference.trim() : null,
+              justification: prespecified ? null : justification.trim(),
+              predicted_rate: rateNumber,
+              rate_unit: rateNumber === null ? null : rateUnit,
+              rate_basis: rateNumber === null ? null : rateBasis.trim(),
+              effective_from: from,
+              dictionary_id: dict,
+              terms,
+            },
+            { onError: setErr, onSuccess: onClose },
+          );
+        }}
+      >
+        <p className="text-sm text-ink2">
+          One cohesive medical concept, which may span several preferred terms. Prespecified
+          concepts point at the safety surveillance plan; a concept added during the trial carries
+          the clinical justification. Enter a predicted rate only with the source it came from.
+        </p>
+        <div className="flex flex-wrap items-end gap-3">
+          <Field label="Concept">
+            <input
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="e.g. Skeletal complications of bone metastases"
+              className={`w-96 ${inputCls}`}
+              required
+            />
+          </Field>
+          <Field label="Effective from">
+            <input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              className={inputCls}
+              required
+            />
+          </Field>
+          <Field label="Dictionary">
+            <select
+              value={dict}
+              onChange={(e) => setDictionaryId(e.target.value)}
+              className={inputCls}
+              required
+            >
+              {dictionaries?.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.type} {d.version}
+                  {d.is_demo_subset ? " (demo)" : ""}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="flex items-center gap-1.5 pb-1 text-xs text-ink2">
+            <input
+              type="checkbox"
+              checked={prespecified}
+              onChange={(e) => setPrespecified(e.target.checked)}
+            />
+            Prespecified in the safety surveillance plan
+          </label>
+          {prespecified ? (
+            <Field label="Plan reference">
+              <input
+                value={planReference}
+                onChange={(e) => setPlanReference(e.target.value)}
+                placeholder="e.g. SSP v1.0 §4.2"
+                className={`w-48 ${inputCls}`}
+                required
+              />
+            </Field>
+          ) : (
+            <Field label="Clinical justification">
+              <input
+                value={justification}
+                onChange={(e) => setJustification(e.target.value)}
+                placeholder="why this event could occur in the population without the drug"
+                className={`w-[32rem] ${inputCls}`}
+                required
+              />
+            </Field>
+          )}
+        </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <Field label="Predicted rate (optional)">
+            <input
+              value={rate}
+              onChange={(e) => setRate(e.target.value)}
+              inputMode="decimal"
+              placeholder="e.g. 3.2"
+              className={`w-28 ${inputCls}`}
+              aria-invalid={rateInvalid || undefined}
+            />
+          </Field>
+          <Field label="Rate unit">
+            <select
+              value={rateUnit}
+              onChange={(e) => setRateUnit(e.target.value as AnticipatedRateUnit)}
+              className={inputCls}
+              disabled={rateNumber === null}
+            >
+              {RATE_UNITS.map((u) => (
+                <option key={u.value} value={u.value}>
+                  {u.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Rate basis" hint="required with a rate: the source, cited">
+            <input
+              value={rateBasis}
+              onChange={(e) => setRateBasis(e.target.value)}
+              placeholder="e.g. placebo arm of NCT…, table 3; accessed 2026-08-17"
+              className={`w-[28rem] ${inputCls}`}
+              disabled={rateNumber === null}
+              required={rateNumber !== null}
+            />
+          </Field>
+        </div>
+        <Field label="Add preferred term">
+          <TermSearch
+            dictionaryId={dict || undefined}
+            value={{ code: "", label: "" }}
+            onSelect={(t) => {
+              if (!t || terms.some((x) => x.pt_code === t.pt_code)) return;
+              setTerms([...terms, { pt_code: t.pt_code, pt_term: t.pt_term }]);
+            }}
+            placeholder="Search terms; the PT is added to the concept"
+          />
+        </Field>
+        {terms.length === 0 ? (
+          <p className="text-xs text-muted">
+            No preferred terms yet; a concept needs at least one.
+          </p>
+        ) : (
+          <ul className="divide-y divide-hairline rounded-md border border-hairline">
+            {terms.map((t, i) => (
+              <li key={t.pt_code} className="flex flex-wrap items-center gap-2 px-3 py-1.5 text-sm">
+                <span>{t.pt_term}</span>
+                <span className="mono text-xs text-muted">{t.pt_code}</span>
+                <button
+                  type="button"
+                  onClick={() => setTerms(terms.filter((_, j) => j !== i))}
+                  className="ml-auto text-muted hover:text-ink"
+                  aria-label={`Remove ${t.pt_term}`}
+                >
+                  <X size={14} aria-hidden />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="flex items-center gap-2">
+          <button
+            type="submit"
+            disabled={create.isPending || !ready}
+            className={primaryCls}
+            style={{ background: "var(--info)" }}
+          >
+            {create.isPending ? "Saving…" : "Add concept"}
+          </button>
+          <button type="button" onClick={onClose} className={buttonCls}>
+            Cancel
+          </button>
+        </div>
+        <ErrorNote error={err} />
+      </form>
+    </Dialog>
+  );
+}
+
 // --- Destinations --------------------------------------------------------------------------------
 
 function DestinationsTab({ admin }: { admin: boolean }) {
@@ -1049,6 +1422,7 @@ function RulesTab({ admin }: { admin: boolean }) {
     related: "yes" as Tri,
     fatal: "" as Tri,
     causality_basis: "either" as CausalityBasis,
+    excludes_anticipated: false,
     requires_prior_submission: false,
     timeline_days: "15",
     due_soon_days: "3",
@@ -1121,6 +1495,7 @@ function RulesTab({ admin }: { admin: boolean }) {
                   criterion(r.unexpected, "unexpected"),
                   criterion(r.related, `related (${r.causality_basis})`),
                   criterion(r.fatal_or_life_threatening, "fatal/LT"),
+                  r.excludes_anticipated ? "excludes anticipated events" : null,
                   r.report_types ? `report type ${r.report_types.join("/")}` : null,
                   r.version_kinds ? `versions ${r.version_kinds.join("/")}` : null,
                   r.requires_prior_submission ? "after a prior submission" : null,
@@ -1192,6 +1567,7 @@ function RulesTab({ admin }: { admin: boolean }) {
               related: tri(f.related),
               fatal_or_life_threatening: tri(f.fatal),
               causality_basis: f.causality_basis,
+              excludes_anticipated: f.excludes_anticipated,
               requires_prior_submission: f.requires_prior_submission,
               timeline_days: Number(f.timeline_days),
               due_soon_days: Number(f.due_soon_days),
@@ -1338,6 +1714,17 @@ function RulesTab({ admin }: { admin: boolean }) {
                 onChange={(e) => set("requires_prior_submission", e.target.checked)}
               />
               Requires prior submission
+            </label>
+            <label
+              className="flex items-center gap-1.5 pb-1 text-xs text-ink2"
+              title="An event the sponsor designated anticipated in the study population does not satisfy this rule (FDA IND safety reporting; leave off for EU CTR and ICH E2A rules)"
+            >
+              <input
+                type="checkbox"
+                checked={f.excludes_anticipated}
+                onChange={(e) => set("excludes_anticipated", e.target.checked)}
+              />
+              Excludes anticipated events
             </label>
           </div>
           <div className="flex flex-wrap items-end gap-3">

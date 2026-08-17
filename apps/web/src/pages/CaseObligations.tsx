@@ -530,8 +530,9 @@ export function SubmissionDialog({
       >
         <p className="text-sm text-ink2">
           Records what was sent, bound to the version hash{" "}
-          <span className="mono text-xs">{version?.sha256.slice(0, 12)}…</span>. For E2B(R3) JSON
-          with no payload chosen, the server renders the export and stores the exact bytes.
+          <span className="mono text-xs">{version?.sha256.slice(0, 12)}…</span>. For E2B(R3) JSON,
+          CIOMS I, or Form FDA 3500A with no payload chosen, the server renders the export and
+          stores the exact bytes it sent.
         </p>
         {!approved && (
           <ErrorNote
@@ -599,7 +600,13 @@ export function SubmissionDialog({
               className={`w-56 ${inputCls}`}
             >
               <option value="">
-                {effectiveFormat === "e2b_r3_json" ? "Server renders E2B JSON" : "None recorded"}
+                {effectiveFormat === "e2b_r3_json"
+                  ? "Server renders E2B JSON"
+                  : effectiveFormat === "cioms_i_pdf"
+                    ? "Server renders CIOMS I"
+                    : effectiveFormat === "medwatch_3500a_pdf"
+                      ? "Server renders FDA 3500A"
+                      : "None recorded"}
               </option>
               {payloads.map((a) => (
                 <option key={a.id} value={a.id}>

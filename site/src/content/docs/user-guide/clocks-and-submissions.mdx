@@ -33,7 +33,11 @@ case shows them with a derived status:
 ![The Obligations panel of a case five days overdue: three rows for the EU CTR SUSAR 15-day rule, the FDA IND 15-day rule, and the investigator notification letter, each with its citation, destination, day zero, due date, an Overdue chip, and disabled Record submission and Waive actions.](../../../assets/screenshots/obligations-card.webp)
 
 "Why does this rule apply" is a click away: the rule matches panel shows the predicate the
-engine evaluated for the version.
+engine evaluated for the version. It also shows the rules a designation held back: when
+the sponsor designates an event anticipated in the study population, an FDA IND rule marked
+"excludes anticipated events" is listed with no clock and the concept named, so a report
+that is not owed to FDA is visible as a decision, not as an absence (see
+[coding and assessment](/pv-core/user-guide/coding-and-assessment/#anticipated-serious-adverse-events)).
 
 ![The Rule matches panel: each rule that applies to version 1 with its citation, destination, kind of report, timeline in days, and day zero.](../../../assets/screenshots/rule-matches-card.webp)
 
@@ -45,9 +49,25 @@ follow-up, amendment, nullification, notification letter), and the format. For C
 Form FDA 3500A, and the E2B(R3) JSON format the app renders the document itself from the
 approved version and stores the exact bytes; for anything else attach the file you sent.
 The CIOMS I and 3500A renderings follow the official forms' field lists and name the
-version hash on every page, so what was sent can always be traced to what was signed. The database refuses a submission unless the version
-carries an approval signature bound to its current hash, and copies that hash onto the
-submission record. Then record the acknowledgement when it arrives.
+version hash on every page, so what was sent can always be traced to what was signed; the
+Version card offers both as previews (CIOMS I (PDF), FDA 3500A (PDF)) next to the E2B JSON
+export, so nobody types a case into a form by hand. The database refuses a submission
+unless the version carries an approval signature bound to its current hash, and copies
+that hash onto the submission record. Then record the acknowledgement when it arrives.
+
+### Which route to FDA
+
+Since April 1, 2026, an IND safety report for a serious and unexpected suspected adverse
+reaction from a non-exempt IND goes to FAERS as an E2B(R3) individual case safety report,
+through the FDA Electronic Submissions Gateway or the Safety Reporting Portal (FDA,
+Providing Regulatory Submissions in Electronic Format: IND Safety Reports, April 2024,
+§IV.A and §IV.B; the December 2025 sponsor guidance restates it in §VIII). Noncommercial
+INDs, which include investigator-sponsored INDs, are exempt and should send Form FDA 3500A
+as a PDF in the alternate electronic format, or by fax or email to the review division
+(December 2025 sponsor guidance, §VIII.C). For an academic sponsor that is the 3500A this
+app renders. For a commercial sponsor the E2B(R3) XML file is the report, and that export
+is the [roadmap's](/pv-core/roadmap/) first arc: the JSON export carries the same elements
+today, and the transmission itself stays with the sponsor's gateway account either way.
 
 ![The Record submission dialog for version 1: destination FDA CDER preselected, kind initial, a format list with CIOMS I PDF, MedWatch 3500A PDF, E2B(R3) JSON, portal, and email, a payload selector, message id, and note.](../../../assets/screenshots/dialog-record-submission.webp)
 

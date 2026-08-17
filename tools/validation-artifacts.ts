@@ -1,0 +1,211 @@
+/**
+ * Generate validation raw material from a real test run (ADR-0017):
+ *
+ *   docs/validation/oq-report.md      Operational Qualification evidence:
+ *                                     every test, its result, environment
+ *   docs/validation/traceability.md   requirement -> mechanism -> verifying
+ *   docs/validation/traceability.csv  tests, joined from the compliance
+ *                                     mapping tables and the suite itself
+ *
+ * The join key is the regulatory token appearing verbatim in test names
+ * (§11.10(e), E2A §III.B, E2B(R3) §3.3.1, E2F §3.7, 312.32(c), Art. 42(2),
+ * Annex III §2.4), so the matrix can never silently drift from the suite: an
+ * untested requirement shows an empty cell, a renamed test drops out.
+ *
+ * Usage: pnpm validation:artifacts
+ */
+import { execFileSync } from "node:child_process";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+
+const ROOT = join(import.meta.dirname, "..");
+const OUT = join(ROOT, "docs", "validation");
+
+/**
+ * Normalized regulatory tokens in a piece of text. Section depth is trimmed
+ * to the level test names use, so "E2A §III.B.1–2" and "E2A §III.B" meet.
+ */
+export function tokensOf(text: string): Set<string> {
+  const out = new Set<string>();
+  for (const m of text.matchAll(/§11\.\d+(?:\([a-z]\))?/g)) out.add(m[0]);
+  for (const m of text.matchAll(/E2A §([IVX]+)(?:\.([A-Z]))?/g))
+    out.add(`E2A §${m[1]}${m[2] ? `.${m[2]}` : ""}`);
+  for (const m of text.matchAll(/E2B\(R3\)(?: IG)? §(\d+(?:\.\d+)*)/g)) out.add(`E2B(R3) §${m[1]}`);
+  for (const m of text.matchAll(/E2F §(\d+\.\d+)/g)) out.add(`E2F §${m[1]}`);
+  for (const m of text.matchAll(/312\.32\(([a-z])\)/g)) out.add(`312.32(${m[1]})`);
+  for (const m of text.matchAll(/Art\. 42\(2\)/g)) out.add(m[0]);
+  for (const m of text.matchAll(/Annex III §(\d+\.\d+)/g)) out.add(`Annex III §${m[1]}`);
+  return out;
+}
+
+interface TestCase {
+  file: string;
+  fullName: string;
+  status: string;
+  duration: number;
+}
+
+function runSuite(): { tests: TestCase[]; success: boolean } {
+  let stdout: string;
+  try {
+    stdout = execFileSync("pnpm", ["exec", "vitest", "run", "--reporter=json"], {
+      cwd: ROOT,
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+      env: { ...process.env, AUTH_MODE: process.env.AUTH_MODE ?? "dev" },
+    });
+  } catch (e) {
+    // vitest exits non-zero on test failure but still emits the JSON report
+    stdout = (e as { stdout?: string }).stdout ?? "";
+  }
+  const jsonStart = stdout.indexOf('{"numTotalTestSuites"');
+  if (jsonStart === -1) throw new Error("vitest produced no JSON report");
+  const report = JSON.parse(stdout.slice(jsonStart)) as {
+    success: boolean;
+    testResults: {
+      name: string;
+      assertionResults: { fullName: string; status: string; duration?: number }[];
+    }[];
+  };
+  const tests = report.testResults.flatMap((suite) =>
+    suite.assertionResults.map((test) => ({
+      file: suite.name.replace(`${ROOT}/`, ""),
+      fullName: test.fullName,
+      status: test.status,
+      duration: test.duration ?? 0,
+    })),
+  );
+  return { tests, success: report.success };
+}
+
+interface Requirement {
+  id: string;
+  requirement: string;
+  mechanism: string;
+  tokens: Set<string>;
+}
+
+/** Parse both mapping tables out of docs/03-compliance.md. */
+function parseComplianceTables(): Requirement[] {
+  const md = readFileSync(join(ROOT, "docs", "03-compliance.md"), "utf8");
+  const requirements: Requirement[] = [];
+  for (const line of md.split("\n")) {
+    if (
+      !line.startsWith("| ") ||
+      line.startsWith("| Requirement") ||
+      line.startsWith("| Expectation") ||
+      line.startsWith("| ---")
+    )
+      continue;
+    const cells = line.split("|").map((c) => c.trim());
+    const requirement = cells[1] ?? "";
+    const tokens = tokensOf(requirement);
+    if (tokens.size === 0) continue;
+    const id = [...tokens][0]!;
+    requirements.push({ id, requirement, mechanism: cells[2] ?? "", tokens });
+  }
+  if (requirements.length === 0)
+    throw new Error("no requirement rows found in docs/03-compliance.md; table format changed?");
+  return requirements;
+}
+
+function environment(): string {
+  const git = execFileSync("git", ["rev-parse", "--short", "HEAD"], {
+    cwd: ROOT,
+    encoding: "utf8",
+  }).trim();
+  return `commit ${git}, node ${process.version}, ${new Date().toISOString()}`;
+}
+
+function main() {
+  const { tests, success } = runSuite();
+  const requirements = parseComplianceTables();
+  const env = environment();
+  mkdirSync(OUT, { recursive: true });
+
+  const byFile = new Map<string, TestCase[]>();
+  for (const t of tests) byFile.set(t.file, [...(byFile.get(t.file) ?? []), t]);
+  const passed = tests.filter((t) => t.status === "passed").length;
+  const oq: string[] = [
+    "# Operational Qualification report",
+    "",
+    `Environment: ${env}`,
+    "",
+    "Generated by `pnpm validation:artifacts` from a live run of the suite (ADR-0017); never edited by hand.",
+    "",
+    `Suite result: **${success ? "PASSED" : "FAILED"}**: ${passed}/${tests.length} tests passed.`,
+    "",
+  ];
+  for (const [file, cases] of byFile) {
+    oq.push(`## ${file}`, "", "| Result | Test | ms |", "| --- | --- | ---: |");
+    for (const t of cases) {
+      oq.push(
+        `| ${t.status === "passed" ? "PASS" : t.status.toUpperCase()} | ${t.fullName.replaceAll("|", "\\|")} | ${Math.round(t.duration)} |`,
+      );
+    }
+    oq.push("");
+  }
+  oq.push("Reviewed by: ______________________  Date: ____________", "");
+  writeFileSync(join(OUT, "oq-report.md"), oq.join("\n"));
+
+  const testTokens = tests.map((t) => ({ t, tokens: tokensOf(t.fullName) }));
+  const matrix = requirements.map((req) => ({
+    ...req,
+    tests: testTokens
+      .filter(({ tokens }) => [...req.tokens].some((k) => tokens.has(k)))
+      .map(({ t }) => t),
+  }));
+  const md: string[] = [
+    "# Requirement traceability matrix",
+    "",
+    `Generated from a live test run (${env}); regenerate with \`pnpm validation:artifacts\`.`,
+    "Join key: the regulatory token appearing verbatim in test names, so this matrix cannot",
+    "drift from the suite without showing it.",
+    "",
+    "| Requirement | Mechanism | Verifying tests | Result |",
+    "| --- | --- | --- | --- |",
+  ];
+  for (const row of matrix) {
+    const names = row.tests.map((t) => t.fullName.replaceAll("|", "\\|")).join("<br>");
+    const result =
+      row.tests.length === 0
+        ? "none"
+        : row.tests.every((t) => t.status === "passed")
+          ? "PASS"
+          : "FAIL";
+    md.push(
+      `| ${row.requirement} | ${row.mechanism} | ${names || "*(no automated test)*"} | ${result} |`,
+    );
+  }
+  const untested = matrix.filter((r) => r.tests.length === 0).map((r) => r.id);
+  md.push(
+    "",
+    untested.length
+      ? `Requirements without automated verification: ${untested.join(", ")}. See the mechanism column and docs/03-compliance.md for their status (some are documented as not claimed).`
+      : "Every mapped requirement has at least one automated verification.",
+    "",
+  );
+  writeFileSync(join(OUT, "traceability.md"), md.join("\n"));
+
+  const q = (s: string) => `"${s.replaceAll('"', '""')}"`;
+  const csv = [
+    "requirement_id,requirement,mechanism,test_file,test_name,status",
+    ...matrix.flatMap((row) =>
+      row.tests.length === 0
+        ? [`${q(row.id)},${q(row.requirement)},${q(row.mechanism)},"","",""`]
+        : row.tests.map(
+            (t) =>
+              `${q(row.id)},${q(row.requirement)},${q(row.mechanism)},${q(t.file)},${q(t.fullName)},${q(t.status)}`,
+          ),
+    ),
+  ];
+  writeFileSync(join(OUT, "traceability.csv"), `${csv.join("\n")}\n`);
+
+  console.log(`OQ: ${passed}/${tests.length} tests passed -> docs/validation/oq-report.md`);
+  console.log(
+    `Traceability: ${matrix.length} requirements, ${matrix.length - untested.length} with automated tests -> docs/validation/traceability.{md,csv}`,
+  );
+  if (!success) process.exit(1);
+}
+
+main();

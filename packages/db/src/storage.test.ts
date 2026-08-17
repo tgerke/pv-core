@@ -11,7 +11,7 @@ import { createLockedBucket, makeLocalStore, makeS3Store, sha256Of } from "./sto
  * answers (S3_ENDPOINT or localhost:9002).
  */
 
-describe("local blob store (ADR-0013)", () => {
+describe("local blob store (ADR-0013, §11.10(b))", () => {
   const dir = mkdtempSync(join(tmpdir(), "pv-store-"));
   const store = makeLocalStore(dir);
 

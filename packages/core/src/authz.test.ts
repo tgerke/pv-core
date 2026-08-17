@@ -7,7 +7,7 @@ const ORG = "11111111-1111-1111-1111-111111111111";
 const OTHER_ORG = "22222222-2222-2222-2222-222222222222";
 const STUDY = "33333333-3333-3333-3333-333333333333";
 
-describe("authorization over grants (ADR-0015, ADR-0016)", () => {
+describe("authorization over grants (§11.10(g), ADR-0015, ADR-0016)", () => {
   it("a sponsor-scoped reviewer assesses that sponsor's studies and no others", () => {
     const grants: Grant[] = [{ role: "medical_reviewer", organization_id: ORG, study_id: null }];
     expect(permits(grants, "assess", { studyId: STUDY, sponsorOrgId: ORG })).toBe(true);

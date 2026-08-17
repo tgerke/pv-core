@@ -43,7 +43,7 @@ describe("e-signatures (§11.50 §11.70 §11.200)", () => {
     );
   });
 
-  it("a submission needs an approval signature bound to the current hash and copies that hash", async () => {
+  it("a submission needs an approval signature bound to the current hash and copies that hash; the acknowledgement discharges it (E2B(R3) IG §4.0)", async () => {
     const c = await createCase(db, actor, await validCaseInput(fx));
     const early = await recordSubmission(db, actor, {
       caseVersionId: c.caseVersionId,

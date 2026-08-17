@@ -50,7 +50,7 @@ describe("dev-mode authentication (§11.10(d))", () => {
   });
 });
 
-describe("authorization by grant scope (ADR-0015)", () => {
+describe("authorization by grant scope (§11.10(g), ADR-0015)", () => {
   it("a sponsor-scoped reviewer never sees the other sponsor's cases; the unscoped admin sees all", async () => {
     const reviewer = (await (await app.request("/queue", { headers: REVIEWER })).json()) as {
       sender_case_id: string;

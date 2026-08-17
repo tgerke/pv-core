@@ -76,7 +76,7 @@ describe("least-privilege runtime role pv_app (§11.10(c) §11.10(d))", () => {
   });
 });
 
-describe("read-only role pv_readonly (ADR-0008: arms at rest stay out of reach)", () => {
+describe("read-only role pv_readonly (ADR-0008, E2A §III.D: arms at rest stay out of reach)", () => {
   it("reads the derived views", async () => {
     const rows = await ro`SELECT count(*)::int AS n FROM v_case_queue`;
     expect(rows[0]!.n).toBeGreaterThan(0);

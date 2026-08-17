@@ -153,6 +153,17 @@ describe("guards (0001): CHECK constraints the schema carries", () => {
     });
   });
 
+  it("a fatal outcome requires the death seriousness criterion (E2A §II.B; E2B(R3) E.i.3.2a, E.i.7)", async () => {
+    await inRollback(async (tx) => {
+      const [e] = await tx`
+        SELECT e.id FROM case_event e JOIN case_version cv ON cv.id = e.case_version_id JOIN "case" c ON c.id = cv.case_id
+        WHERE c.sender_case_id = 'US-CORC-2026-0005'`;
+      await expect(tx`UPDATE case_event SET outcome = 'fatal' WHERE id = ${e!.id}`).rejects.toThrow(
+        /fatal_is_serious/,
+      );
+    });
+  });
+
   it("scopes a grant to a sponsor or a study, never both (ADR-0015)", async () => {
     await inRollback(async (tx) => {
       const [p] = await tx`SELECT id FROM person LIMIT 1`;

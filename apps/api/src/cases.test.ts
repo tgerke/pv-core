@@ -29,7 +29,7 @@ beforeAll(async () => {
 });
 afterAll(() => sql.end());
 
-describe("case lifecycle over HTTP (E2B(R3) §3.3.1; E2A §III.B; §11.70)", () => {
+describe("case lifecycle over HTTP (E2B(R3) §3.3.1; E2A §III.B; §11.70; §11.10(b))", () => {
   it("walks a case from intake to acknowledged submission and a follow-up", async () => {
     // Intake: no reporter yet.
     const created = await j(

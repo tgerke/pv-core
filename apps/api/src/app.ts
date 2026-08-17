@@ -297,8 +297,6 @@ export function buildApp(db: Db, sql: Sql) {
     c.req.method === "GET" ? ("read" as const) : ("enter" as const);
   const readOrAdminister = (c: { req: { method: string } }) =>
     c.req.method === "GET" ? ("read" as const) : ("administer" as const);
-  const readOrSubmit = (c: { req: { method: string } }) =>
-    c.req.method === "GET" ? ("read" as const) : ("submit" as const);
 
   app.use("/me", auth);
   app.use("/studies", auth, requirePermission(sql, readOrAdminister));

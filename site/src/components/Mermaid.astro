@@ -1,0 +1,40 @@
+---
+// Client-side Mermaid rendering (bundled from npm, no CDN) so the diagram
+// source stays as text in the page and follows Starlight's theme toggle.
+const { code } = Astro.props;
+---
+
+<div class="mermaid-diagram" data-code={code}></div>
+
+<script>
+  import mermaid from "mermaid";
+
+  const containers = document.querySelectorAll<HTMLElement>(".mermaid-diagram");
+
+  async function render() {
+    const dark = document.documentElement.dataset.theme === "dark";
+    mermaid.initialize({ startOnLoad: false, theme: dark ? "dark" : "neutral" });
+    let i = 0;
+    for (const el of containers) {
+      const source = el.dataset.code;
+      if (!source) continue;
+      const { svg } = await mermaid.render(`mmd-${i++}-${dark ? "dark" : "light"}`, source);
+      el.innerHTML = svg;
+    }
+  }
+
+  render();
+  new MutationObserver(() => render()).observe(document.documentElement, {
+    attributeFilter: ["data-theme"],
+  });
+</script>
+
+<style>
+  .mermaid-diagram {
+    overflow-x: auto;
+  }
+  .mermaid-diagram :global(svg) {
+    max-width: 100%;
+    height: auto;
+  }
+</style>

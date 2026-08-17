@@ -7,10 +7,10 @@ hero:
   title: The regulatory clock is a query, not a tracker spreadsheet
   tagline: >-
     pv-core is an open-source pharmacovigilance case-management system for the
-    sponsor and CRO seat. Every case is an E2B(R3)-shaped record with versions
-    that lock on signature; reporting obligations are materialized from rules
-    and their status is derived on every read; and 21 CFR Part 11 is a property
-    of the schema, not a feature toggle.
+    sponsor and CRO seat. Every case is an ICH E2B(R3)-shaped record with versions
+    that lock on signature; reporting obligations are materialized from rules and
+    their status is derived on every read; and 21 CFR Part 11 is a property of the
+    schema, not a feature toggle.
   actions:
     - text: Get started
       link: /pv-core/getting-started/
@@ -25,5 +25,30 @@ hero:
       variant: minimal
 ---
 
-The site is written slice by slice alongside the code. Start with
-[Getting started](/pv-core/getting-started/).
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+<CardGrid>
+  <Card title="Cases shaped by E2B(R3)" icon="document">
+    Reporters, patient, coded events with the six seriousness criteria, drugs, drug-by-event
+    assessments, narrative. Versions are editable until the first signature and immutable
+    after it; follow-ups and corrections are new versions.
+  </Card>
+  <Card title="Clocks derived, never maintained" icon="approve-check">
+    Reporting rules are rows: destination, timeline, and a test over the case. Obligations
+    materialize the moment a case is a valid ICSR; due soon, overdue, submitted,
+    acknowledged, superseded, and waived are computed on every read.
+  </Card>
+  <Card title="Compliance as schema" icon="seti:lock">
+    A hash-chained audit trail written by database triggers, immutable signatures and
+    submissions, signatures bound to the version hash, re-authentication to sign, and a
+    runtime role that can only run DML.
+  </Card>
+  <Card title="Made for the R seat too" icon="laptop">
+    The web app consumes only the public API. The overdue queue, the DSUR line listing, and
+    every derived view are one httr2 call or one read-only SQL connection away.
+  </Card>
+</CardGrid>
+
+Continue with [getting started](/pv-core/getting-started/) or the [user guide](/pv-core/user-guide/).
+For what a CRO safety-database engagement needs and how far this is from it, read the
+[roadmap and honest gaps](/pv-core/roadmap/).

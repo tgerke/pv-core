@@ -24,7 +24,11 @@ const AUDIENCE = "pv-api";
 // The seeded safety physician (email survives re-seeding).
 const REVIEWER_EMAIL = "priya.raman@corc.example";
 
-async function mint(claims: JWTPayload & { email?: string }, audience = AUDIENCE, subject = "vitest-subject") {
+async function mint(
+  claims: JWTPayload & { email?: string },
+  audience = AUDIENCE,
+  subject = "vitest-subject",
+) {
   return new SignJWT({ email: REVIEWER_EMAIL, email_verified: true, ...claims })
     .setProtectedHeader({ alg: "RS256", kid: "vitest" })
     .setSubject(subject)
@@ -70,13 +74,21 @@ afterAll(async () => {
 
 describe("OIDC authentication (§11.10(d), ADR-0016)", () => {
   it("accepts a valid token and resolves the person by verified email claim", async () => {
-    const res = await app.request("/me", { headers: { Authorization: `Bearer ${await mint({})}` } });
+    const res = await app.request("/me", {
+      headers: { Authorization: `Bearer ${await mint({})}` },
+    });
     expect(res.status).toBe(200);
     expect(((await res.json()) as { label: string }).label).toMatch(/Priya Raman/);
   });
 
   it("rejects a token for the wrong audience and a forged token (wrong key)", async () => {
-    expect((await app.request("/me", { headers: { Authorization: `Bearer ${await mint({}, "other-api")}` } })).status).toBe(401);
+    expect(
+      (
+        await app.request("/me", {
+          headers: { Authorization: `Bearer ${await mint({}, "other-api")}` },
+        })
+      ).status,
+    ).toBe(401);
     const rogue = await generateKeyPair("RS256");
     const forged = await new SignJWT({ email: REVIEWER_EMAIL, email_verified: true })
       .setProtectedHeader({ alg: "RS256", kid: "vitest" })
@@ -85,15 +97,29 @@ describe("OIDC authentication (§11.10(d), ADR-0016)", () => {
       .setAudience(AUDIENCE)
       .setExpirationTime("5m")
       .sign(rogue.privateKey);
-    expect((await app.request("/me", { headers: { Authorization: `Bearer ${forged}` } })).status).toBe(401);
+    expect(
+      (await app.request("/me", { headers: { Authorization: `Bearer ${forged}` } })).status,
+    ).toBe(401);
   });
 
   it("rejects an authenticated identity with no person record (403, never a fallback actor)", async () => {
-    expect((await app.request("/me", { headers: { Authorization: `Bearer ${await mint({ email: "stranger@example.com" })}` } })).status).toBe(403);
+    expect(
+      (
+        await app.request("/me", {
+          headers: { Authorization: `Bearer ${await mint({ email: "stranger@example.com" })}` },
+        })
+      ).status,
+    ).toBe(403);
   });
 
   it("rejects a token whose email is explicitly unverified", async () => {
-    expect((await app.request("/me", { headers: { Authorization: `Bearer ${await mint({ email_verified: false })}` } })).status).toBe(403);
+    expect(
+      (
+        await app.request("/me", {
+          headers: { Authorization: `Bearer ${await mint({ email_verified: false })}` },
+        })
+      ).status,
+    ).toBe(403);
   });
 
   it("maps a machine identity by subject (API_SERVICE_SUBJECTS) to the enter-only intake person", async () => {
@@ -106,11 +132,18 @@ describe("OIDC authentication (§11.10(d), ADR-0016)", () => {
       .setExpirationTime("5m")
       .sign(keys.privateKey);
     // Reads nothing (ingest is enter-only), creates a case fine.
-    expect((await app.request("/queue", { headers: { Authorization: `Bearer ${svc}` } })).status).toBe(403);
+    expect(
+      (await app.request("/queue", { headers: { Authorization: `Bearer ${svc}` } })).status,
+    ).toBe(403);
     const res = await app.request("/cases", {
       method: "POST",
       headers: { Authorization: `Bearer ${svc}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ study_id: fx.studyId, product_id: fx.productId, first_received_date: fx.today, source: { system: "edc-core", ref: "SAE-OIDC-1" } }),
+      body: JSON.stringify({
+        study_id: fx.studyId,
+        product_id: fx.productId,
+        first_received_date: fx.today,
+        source: { system: "edc-core", ref: "SAE-OIDC-1" },
+      }),
     });
     expect(res.status).toBe(201);
   });
@@ -135,7 +168,11 @@ describe("OIDC signing re-authentication (§11.200)", () => {
   it("accepts a fresh re-auth token for the same subject and records oidc_fresh_token", async () => {
     const session = await mint({});
     const versionId = await fixtureVersion();
-    const res = await sign(session, versionId, await mint({ auth_time: Math.floor(Date.now() / 1000) }));
+    const res = await sign(
+      session,
+      versionId,
+      await mint({ auth_time: Math.floor(Date.now() / 1000) }),
+    );
     expect(res.status).toBe(201);
     const { signature_id } = (await res.json()) as { signature_id: string };
     const [sig] = await sql`SELECT reauth_method FROM signature WHERE id = ${signature_id}`;
@@ -145,12 +182,28 @@ describe("OIDC signing re-authentication (§11.200)", () => {
   it("rejects a stale re-auth token (auth_time outside the freshness window)", async () => {
     const session = await mint({});
     const versionId = await fixtureVersion();
-    expect((await sign(session, versionId, await mint({ auth_time: Math.floor(Date.now() / 1000) - 3600 }))).status).toBe(403);
+    expect(
+      (
+        await sign(
+          session,
+          versionId,
+          await mint({ auth_time: Math.floor(Date.now() / 1000) - 3600 }),
+        )
+      ).status,
+    ).toBe(403);
   });
 
   it("rejects a re-auth token minted for a different subject", async () => {
     const session = await mint({});
     const versionId = await fixtureVersion();
-    expect((await sign(session, versionId, await mint({ auth_time: Math.floor(Date.now() / 1000) }, AUDIENCE, "someone-else"))).status).toBe(403);
+    expect(
+      (
+        await sign(
+          session,
+          versionId,
+          await mint({ auth_time: Math.floor(Date.now() / 1000) }, AUDIENCE, "someone-else"),
+        )
+      ).status,
+    ).toBe(403);
   });
 });

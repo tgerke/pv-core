@@ -10,7 +10,6 @@ carry rationale, alternatives, and consequences.
 ## ADR-0001: The seat is sponsor/CRO-side, clinical-trial pharmacovigilance {#adr-0001}
 
 pv-core is built for the sponsor and CRO seat of pre-approval pharmacovigilance: serious adverse events from interventional trials, processed as ICH E2B(R3)-shaped Individual Case Safety Reports, judged against ICH E2A definitions, clocked against 21 CFR 312.32 and Regulation (EU) 536/2014 Article 42, and summarized for the DSUR of ICH E2F. A CRO runs one instance and hosts several sponsors on it.
- Post-marketing spontaneous reporting is supported by the data model (the case carries an E2B(R3) report type) but is not the workflow, seed, or documentation focus.
 
 ## ADR-0002: TypeScript + Postgres; R is a client, not the implementation {#adr-0002}
 
@@ -31,7 +30,6 @@ The repository ships no MedDRA content. `pnpm db:import-meddra -- --version <v> 
 ## ADR-0006: Case versions lock on signature; follow-ups and corrections are new versions {#adr-0006}
 
 `case` is the constant identity. Each transmission-worthy state is a `case_version` (`initial`, `follow_up`, `amendment`) with its own set of child rows (patient, sources, events, drugs, assessments, tests, narrative). A version and its children are mutable while no signature exists on it, and every mutation is audited with before and after images. The first `signature` on a version freezes it: `pv_forbid_locked_version_mutation()` rejects INSERT, UPDATE, and DELETE on the version and every child table from then on. Any later change opens a new version, cloned from the previous one. A `follow_up` carries new source information and its own awareness date; an `amendment` is a sponsor correction with no new source information and keeps C.1.5. `case_nullification` is a fact; a trigger rejects further versions of a nullified case, and a resubmission is a new case with `replaces_case_id`.
- `pv_case_version_sha256(version_id)` hashes the canonical JSON of the version and its children; `signature.signed_sha256` copies it at signing and `v_signature_integrity` recomputes it on demand.
 
 ## ADR-0007: Reporting obligations are rules-as-data materialized into expected submissions with a derived clock {#adr-0007}
 
@@ -55,7 +53,7 @@ Any statement attributing a requirement, timeline, definition, or code to ICH E2
 
 ## ADR-0012: Regulatory forms are transcribed from the official documents; a PDF is a rendering of the signed version {#adr-0012}
 
-CIOMS I and FDA MedWatch 3500A PDFs are rendered server-side (pdfkit) from a case version. The field lists and box numbering are transcribed from the official form documents fetched at implementation time (CIOMS I from the Council for International Organizations of Medical Sciences; Form FDA 3500A and its instructions from fda.gov), with URL and access date recorded here when that commit lands. If a form cannot be fetched and verified, the output ships as an "ICH E2A Attachment 1 element report" (the key data elements the source library does carry) and is listed as an honest gap; no form layout is written from memory. A rendered PDF is not the record: the version hash is. Recording a submission stores the exact bytes sent as a content-addressed attachment and copies the version hash onto the submission row.
+CIOMS I and FDA MedWatch 3500A PDFs are rendered server-side (pdfkit) from a case version (`packages/core/src/forms.ts`). The field lists and box numbering are transcribed from the official form documents, fetched 2026-08-17:
 
 ## ADR-0013: Attachments and payloads are content-addressed; WORM depends on deployment {#adr-0013}
 

@@ -45,6 +45,8 @@ import {
   recordAcknowledgement,
   recordSubmission,
   recordUnblinding,
+  renderCiomsI,
+  renderMedWatch3500A,
   reportability,
   reportingCompliance,
   resolveScope,
@@ -350,6 +352,16 @@ export function buildApp(db: Db, sql: Sql) {
     requirePermission(sql, "submit", "versionId"),
   );
   app.use("/case-versions/:versionId/e2b.json", auth, requirePermission(sql, "read", "versionId"));
+  app.use(
+    "/case-versions/:versionId/cioms1.pdf",
+    auth,
+    requirePermission(sql, "read", "versionId"),
+  );
+  app.use(
+    "/case-versions/:versionId/medwatch-3500a.pdf",
+    auth,
+    requirePermission(sql, "read", "versionId"),
+  );
   app.use(
     "/case-versions/:versionId/rule-matches",
     auth,
@@ -1005,6 +1017,28 @@ export function buildApp(db: Db, sql: Sql) {
     }),
     async (c) => c.json(await buildE2bJson(sql, c.req.valid("param").versionId), 200),
   );
+  // Regulatory form renderings (ADR-0012; documented informally, binary
+  // response): CIOMS I and Form FDA 3500A rendered from the version, with the
+  // version hash in the footer. What was actually sent is the stored payload.
+  const pdfRoute = (
+    suffix: string,
+    fileTag: string,
+    fn: (versionId: string) => Promise<Uint8Array>,
+  ) =>
+    app.get(`/case-versions/:versionId/${suffix}`, async (c) => {
+      const versionId = c.req.param("versionId");
+      if (!z.string().uuid().safeParse(versionId).success) {
+        return c.json({ error: "version not found" }, 404);
+      }
+      const bytes = await fn(versionId);
+      return c.body(new Uint8Array(bytes).buffer as ArrayBuffer, 200, {
+        "content-type": "application/pdf",
+        "content-disposition": `inline; filename="${versionId}-${fileTag}.pdf"`,
+      });
+    });
+  pdfRoute("cioms1.pdf", "cioms-i", (v) => renderCiomsI(sql, v));
+  pdfRoute("medwatch-3500a.pdf", "fda-3500a", (v) => renderMedWatch3500A(sql, v));
+
   app.openapi(
     createRoute({
       method: "get",
@@ -1024,7 +1058,7 @@ export function buildApp(db: Db, sql: Sql) {
       summary:
         "Record what was sent to a destination; requires an approval signature bound to the version's hash",
       description:
-        "For format e2b_r3_json with no payload attachment, the server renders the export and stores the exact bytes content-addressed; every submission row copies the version hash it sent (ADR-0012/0013).",
+        "With no payload attachment, the server renders the payload itself for e2b_r3_json, cioms_i_pdf, and medwatch_3500a_pdf and stores the exact bytes content-addressed; every submission row copies the version hash it sent (ADR-0012/0013).",
       request: { params: P.versionId, body: body(SubmissionBody) },
       responses: {
         201: json(
@@ -1056,6 +1090,20 @@ export function buildApp(db: Db, sql: Sql) {
           bytes: new TextEncoder().encode(JSON.stringify(doc, null, 2)),
           fileName: `${String(doc["C.1.1"])}-v${doc.meta.version_number}-e2b.json`,
           mimeType: "application/json",
+        };
+      } else if (b.format === "cioms_i_pdf" || b.format === "medwatch_3500a_pdf") {
+        const [v] = await sql`
+          SELECT c.sender_case_id, cv.version_number FROM case_version cv JOIN "case" c ON c.id = cv.case_id
+          WHERE cv.id = ${versionId}`;
+        const tag = b.format === "cioms_i_pdf" ? "cioms-i" : "fda-3500a";
+        const bytes =
+          b.format === "cioms_i_pdf"
+            ? await renderCiomsI(sql, versionId)
+            : await renderMedWatch3500A(sql, versionId);
+        payload = {
+          bytes,
+          fileName: `${String(v?.sender_case_id ?? versionId)}-v${String(v?.version_number ?? "")}-${tag}.pdf`,
+          mimeType: "application/pdf",
         };
       }
       const r = await recordSubmission(db, c.get("actor"), {

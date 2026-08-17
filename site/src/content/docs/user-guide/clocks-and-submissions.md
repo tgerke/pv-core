@@ -33,9 +33,11 @@ engine evaluated for the version.
 
 Sending happens outside pv-core (a gateway, a portal, an email); recording it happens
 here. Choose the destination, the kind of report (initial notification, initial report,
-follow-up, amendment, nullification, notification letter), and the format. For the E2B(R3)
-JSON format the app renders the export itself and stores the exact bytes; for other
-formats attach the file you sent. The database refuses a submission unless the version
+follow-up, amendment, nullification, notification letter), and the format. For CIOMS I,
+Form FDA 3500A, and the E2B(R3) JSON format the app renders the document itself from the
+approved version and stores the exact bytes; for anything else attach the file you sent.
+The CIOMS I and 3500A renderings follow the official forms' field lists and name the
+version hash on every page, so what was sent can always be traced to what was signed. The database refuses a submission unless the version
 carries an approval signature bound to its current hash, and copies that hash onto the
 submission record. Then record the acknowledgement when it arrives.
 

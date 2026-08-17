@@ -70,6 +70,7 @@ export {
 } from "./dictionaries.js";
 export { buildE2bJson, type E2bExport } from "./e2b.js";
 export { CoreError, type CoreErrorCode, fromPgError } from "./errors.js";
+export { renderCiomsI, renderMedWatch3500A } from "./forms.js";
 export {
   auditEvents,
   caseAuditTrail,
@@ -108,3 +109,4 @@ export {
   type WaiverInput,
   waiveObligation,
 } from "./reporting.js";
+export { loadVersionSnapshot, type VersionSnapshot } from "./snapshot.js";

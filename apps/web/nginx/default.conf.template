@@ -1,0 +1,47 @@
+# Substituted by the nginx image entrypoint at startup: ${API_PROXY_TARGET}
+# comes from the environment; nginx runtime variables ($host, $uri, ...) are
+# untouched because they are not defined environment variables.
+server {
+    listen 5176;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+
+    # The SPA always calls /api/*; the trailing slash on proxy_pass strips
+    # the /api prefix, matching the Vite dev proxy this replaces.
+    location /api/ {
+        proxy_pass ${API_PROXY_TARGET}/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # Source-document uploads stream through here.
+        client_max_body_size 100m;
+    }
+
+    # Runtime SPA auth config from container env: one pinned image serves
+    # any IdP. Exact-match wins over the static dev stub in the bundle.
+    location = /env.js {
+        default_type application/javascript;
+        add_header Cache-Control "no-cache";
+        return 200 'window.__PV_ENV__={AUTH_MODE:"${PV_WEB_AUTH_MODE}",OIDC_ISSUER:"${PV_WEB_OIDC_ISSUER}",OIDC_CLIENT_ID:"${PV_WEB_OIDC_CLIENT_ID}",OIDC_SCOPE:"${PV_WEB_OIDC_SCOPE}"};';
+    }
+
+    # Hashed bundle files never change content under the same name.
+    location /assets/ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    # index.html references the current hashes; always revalidate it.
+    location = /index.html {
+        add_header Cache-Control "no-cache";
+    }
+
+    # Client-side routes (/cases/..., /reporting/...) resolve to the SPA shell.
+    location / {
+        try_files $uri /index.html;
+    }
+}

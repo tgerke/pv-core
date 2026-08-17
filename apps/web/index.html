@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pv-core</title>
+    <!-- Runtime auth config: the production nginx answers /env.js from
+         container env so one pinned image serves any IdP; in dev it is the
+         empty stub in public/. Must load before the app bundle. -->
+    <script src="/env.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

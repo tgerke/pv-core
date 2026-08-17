@@ -1,0 +1,38 @@
+{
+  "name": "pv-core",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "db:up": "docker compose up -d --wait",
+    "db:migrate": "pnpm --filter @pv-core/db migrate",
+    "db:seed": "pnpm --filter @pv-core/db seed",
+    "db:import-meddra": "pnpm --filter @pv-core/db import-meddra",
+    "db:reset": "docker compose down -v && docker compose up -d --wait && pnpm db:migrate && pnpm db:seed",
+    "dev": "pnpm --parallel --filter @pv-core/api --filter @pv-core/web dev",
+    "build": "pnpm -r build",
+    "test": "vitest run",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "pnpm -r typecheck",
+    "check": "pnpm lint && pnpm typecheck && pnpm test",
+    "validation:iq": "pnpm --filter @pv-core/db iq",
+    "validation:artifacts": "tsx tools/validation-artifacts.ts",
+    "digest": "tsx tools/digest.ts"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "@pv-core/core": "workspace:*",
+    "@pv-core/db": "workspace:*",
+    "@types/node": "^22.20.1",
+    "@types/nodemailer": "^6.4.16",
+    "nodemailer": "^6.9.16",
+    "tsx": "^4.23.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

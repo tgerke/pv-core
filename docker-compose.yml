@@ -1,0 +1,57 @@
+# Host ports avoid the sibling stacks so all can run on one machine:
+# edc-core 5432, ctms-core 5433, dmops-core 5434, rtsm-core 5435, pv-core 5436.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: pv
+      POSTGRES_PASSWORD: pv
+      POSTGRES_DB: pv
+    ports:
+      - "5436:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pv"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  # S3-compatible store for the s3 storage driver (WORM via Object Lock,
+  # ADR-0013). Dev/test parity with production object storage; the
+  # local-directory driver remains the default (STORAGE_DRIVER=local).
+  # ctms-core holds host ports 9000/9001, so MinIO is published on 9002/9003.
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: pv
+      MINIO_ROOT_PASSWORD: pv-minio-dev
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  # Dev SMTP sink for the reminders digest (ADR-0014): pnpm digest sends to
+  # host :1026, the inbox UI is on host :8026 (ctms-core holds 1025/8025).
+  # Production points SMTP_URL at a real relay instead.
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "1026:1025"
+      - "8026:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+volumes:
+  pgdata:
+  miniodata:

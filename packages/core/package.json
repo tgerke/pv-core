@@ -1,0 +1,23 @@
+{
+  "name": "@pv-core/core",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pv-core/db": "workspace:*",
+    "drizzle-orm": "^0.36.4",
+    "pdfkit": "^0.15.0",
+    "postgres": "^3.4.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/pdfkit": "^0.13.5",
+    "typescript": "^5.6.0"
+  }
+}

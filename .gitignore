@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+*.local
+.DS_Store
+coverage/
+# attachment and payload blobs (content-addressed store, dev only)
+storage/
+site/dist/
+site/.astro/
+.claude/settings.local.json

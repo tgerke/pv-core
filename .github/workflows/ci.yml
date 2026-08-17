@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: pv
+          POSTGRES_PASSWORD: pv
+          POSTGRES_DB: pv
+        ports:
+          - 5436:5432
+        options: >-
+          --health-cmd "pg_isready -U pv -d pv"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://pv:pv@localhost:5436/pv
+      AUTH_MODE: dev
+      STORAGE_DRIVER: local
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        # version is taken from packageManager in package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Migrate and seed
+        run: pnpm db:migrate && pnpm db:seed
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build web
+        run: pnpm --filter @pv-core/web build

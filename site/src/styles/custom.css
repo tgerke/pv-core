@@ -1,0 +1,218 @@
+/* pv-core design system (shared with the sibling apps): the app's warm paper/ink palette, info-blue accent.
+   Neutrals come from apps/web/src/index.css (page/surface/ink/muted/hairline). */
+
+:root {
+  /* dark theme (Starlight default root) */
+  --sl-color-accent-low: #163a66;
+  --sl-color-accent: #3987e5; /* app --info, dark */
+  --sl-color-accent-high: #b8d4f5;
+  --sl-color-white: #ffffff; /* app --ink, dark */
+  --sl-color-gray-1: #e8e7e0;
+  --sl-color-gray-2: #c3c2b7; /* app --ink2, dark */
+  --sl-color-gray-3: #898781; /* app --muted */
+  --sl-color-gray-4: #6a6963;
+  --sl-color-gray-5: #2c2c2a; /* app --hairline, dark */
+  --sl-color-gray-6: #1a1a19; /* app --surface, dark */
+  --sl-color-black: #0d0d0d; /* app --page, dark */
+
+  --pv-screenshot-border: #2c2c2a;
+  --pv-surface: #1a1a19;
+}
+
+:root[data-theme="light"] {
+  --sl-color-accent-low: #d8e6f8;
+  --sl-color-accent: #2a78d6; /* app --info, light */
+  --sl-color-accent-high: #1d5496;
+  --sl-color-white: #0b0b0b; /* text: app --ink, light */
+  --sl-color-gray-1: #1f1e1c;
+  --sl-color-gray-2: #3a3936;
+  --sl-color-gray-3: #52514e; /* app --ink2, light */
+  --sl-color-gray-4: #898781; /* app --muted */
+  --sl-color-gray-5: #e1e0d9; /* app --hairline, light */
+  --sl-color-gray-6: #f1f0ea;
+  --sl-color-gray-7: #f9f9f7; /* app --page, light */
+  --sl-color-black: #fcfcfb; /* app --surface, light */
+
+  --pv-screenshot-border: #e1e0d9;
+  --pv-surface: #f9f9f7;
+}
+
+/* Content typography: slightly tighter headings, comfortable measure */
+.sl-markdown-content h2 {
+  letter-spacing: -0.015em;
+}
+
+/* Every content image is an app screenshot: card treatment on a deliberate
+   surface so light-chrome screenshots sit well in dark mode too. */
+.sl-markdown-content img {
+  border: 1px solid var(--pv-screenshot-border);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+  background: #ffffff;
+}
+
+/* Tables: quieter borders, warm header row */
+.sl-markdown-content table {
+  font-size: var(--sl-text-sm);
+}
+.sl-markdown-content th {
+  background: var(--pv-surface);
+}
+
+/* ---------------------------------------------------------------------------
+   Landing page (index.mdx, template: splash)
+--------------------------------------------------------------------------- */
+
+.landing {
+  --landing-max: 72rem;
+}
+
+/* Starlight splash hero: centered, constrained measure, product-style CTAs */
+.hero {
+  padding-block: 3.5rem 1.5rem;
+  grid-template-columns: 1fr;
+}
+
+.hero .copy {
+  align-items: center;
+  text-align: center;
+  margin-inline: auto;
+}
+
+.hero h1 {
+  max-width: 46rem;
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.hero .tagline {
+  max-width: 46rem;
+  color: var(--sl-color-gray-3);
+  font-size: var(--sl-text-lg);
+}
+
+.hero .actions {
+  justify-content: center;
+}
+
+.sl-link-button.primary {
+  background: var(--sl-color-accent);
+  border-color: var(--sl-color-accent);
+  color: #ffffff;
+}
+
+.sl-link-button.secondary {
+  border: 1px solid var(--sl-color-gray-5);
+}
+
+.landing-shot {
+  max-width: var(--landing-max);
+  margin: 0 auto 4rem;
+}
+
+.landing-shot img {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--pv-screenshot-border);
+  border-radius: 0.9rem;
+  box-shadow: 0 20px 50px -20px rgb(0 0 0 / 35%);
+  background: #ffffff;
+}
+
+.landing-shot figcaption {
+  text-align: center;
+  color: var(--sl-color-gray-3);
+  font-size: var(--sl-text-sm);
+  margin-top: 0.9rem;
+}
+
+.landing section {
+  max-width: var(--landing-max);
+  margin: 0 auto 4rem;
+}
+
+.landing h2 {
+  font-size: var(--sl-text-2xl);
+  letter-spacing: -0.02em;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.landing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1rem;
+}
+
+/* Starlight's content sibling-spacing rule adds margin-top to every card
+   after the first, skewing the grid rows; the gap is the only spacing here. */
+.landing-grid > .landing-card {
+  margin-top: 0 !important;
+}
+
+/* 4-card sections: 4-up on wide screens, 2x2 in between, instead of 3+1 */
+@media (min-width: 72rem) {
+  .landing-grid--4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+@media (min-width: 40rem) and (max-width: 71.99rem) {
+  .landing-grid--4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.landing-card {
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.9rem;
+  padding: 1.4rem 1.5rem;
+  background: var(--pv-surface);
+}
+
+.landing-card h3 {
+  font-size: var(--sl-text-base);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.6rem;
+}
+
+.landing-card p {
+  font-size: var(--sl-text-sm);
+  color: var(--sl-color-gray-3);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.landing-card p a {
+  color: var(--sl-color-accent-high);
+}
+
+a.landing-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color 120ms ease,
+    transform 120ms ease;
+}
+
+a.landing-card:hover {
+  border-color: var(--sl-color-accent);
+  transform: translateY(-2px);
+}
+
+a.landing-card h3 {
+  color: var(--sl-color-accent-high);
+}
+
+.landing-status {
+  border: 1px solid var(--sl-color-gray-5);
+  border-left: 4px solid var(--sl-color-accent);
+  border-radius: 0.6rem;
+  padding: 1.1rem 1.4rem;
+  font-size: var(--sl-text-sm);
+  color: var(--sl-color-gray-2);
+  max-width: 52rem;
+  margin-inline: auto;
+}

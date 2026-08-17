@@ -1,0 +1,21 @@
+{
+  "name": "pv-core",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "containerEnv": {
+    "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"
+  },
+  "forwardPorts": [5176, 8789, 8026],
+  "portsAttributes": {
+    "5176": { "label": "pv-core web", "onAutoForward": "openBrowser" },
+    "8789": { "label": "pv-core api", "onAutoForward": "silent" },
+    "8026": { "label": "mailpit (digest emails)", "onAutoForward": "silent" }
+  },
+  // AUTH_MODE=dev with the documented demo tokens comes from .env.example;
+  // the seed is two fictional studies and a labeled illustrative MedDRA
+  // subset (the licensed MedDRA distribution is never vendored, ADR-0005).
+  "postCreateCommand": "corepack enable && pnpm install && ([ -f .env ] || cp .env.example .env) && pnpm db:up && pnpm db:migrate && pnpm db:seed",
+  "postStartCommand": "pnpm db:up && nohup pnpm dev > /tmp/pv-dev.log 2>&1 &"
+}
